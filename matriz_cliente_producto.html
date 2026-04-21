@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matriz Cliente–Producto · Sales Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c24;
+    --surface3: #1e2330;
+    --border: #252a36;
+    --border2: #2e3547;
+    --accent: #00d4aa;
+    --accent2: #0099ff;
+    --accent3: #ff6b35;
+    --text: #e8ecf4;
+    --text2: #9aa3b8;
+    --text3: #5a6380;
+    --heat0: #0a0c10;
+    --heat1: #0d2a23;
+    --heat2: #0a4a38;
+    --heat3: #077a5a;
+    --heat4: #00b882;
+    --heat5: #00d4aa;
+    --heat6: #33ffcc;
+    --danger: #ff4757;
+    --warn: #ffa502;
+    --good: #2ed573;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --glow: 0 0 20px rgba(0,212,170,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  .header {
+    position: relative;
+    z-index: 10;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,12,16,0.9);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: #000;
+  }
+
+  .logo-text {
+    font-family: var(--font-mono);
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  .logo-text span { color: var(--accent); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .metric-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .metric-pill .val {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  /* MAIN */
+  .main {
+    position: relative;
+    z-index: 1;
+    padding: 32px;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: 12px;
+    padding: 64px 32px;
+    text-align: center;
+    transition: all 0.3s;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,212,170,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    box-shadow: var(--glow);
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    filter: grayscale(0.3);
+  }
+
+  .upload-title {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .upload-sub {
+    font-size: 14px;
+    color: var(--text3);
+    margin-bottom: 24px;
+  }
+
+  .btn-import {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #000;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-import:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,212,170,0.3);
+  }
+
+  #fileInput { display: none; }
+
+  .format-hint {
+    margin-top: 20px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+  }
+
+  /* DASHBOARD */
+  #dashboard { display: none; }
+
+  /* FILTERS BAR */
+  .filters-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+  }
+
+  .filter-group label {
+    display: block;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .filter-group select, .filter-group input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .filter-group select:focus, .filter-group input:focus {
+    border-color: var(--accent);
+  }
+
+  .filter-group select option { background: var(--surface2); }
+
+  .btn-clear {
+    padding: 9px 20px;
+    background: transparent;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-clear:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* TOGGLE METRIC */
+  .metric-toggle {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .toggle-btn {
+    padding: 8px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toggle-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+    font-weight: 700;
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .section-badge {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    flex-shrink: 0;
+  }
+
+  .section-badge.orange { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+  .section-badge.blue { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .section-badge.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+
+  .section-title {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    color: var(--text);
+  }
+
+  .section-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-left: auto;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  /* HEATMAP MATRIX */
+  .matrix-scroll {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 520px;
+    position: relative;
+  }
+
+  .matrix-table {
+    border-collapse: separate;
+    border-spacing: 2px;
+    min-width: max-content;
+  }
+
+  .matrix-table th {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--text2);
+    padding: 8px 10px;
+    white-space: nowrap;
+    position: sticky;
+    background: var(--surface);
+    z-index: 2;
+  }
+
+  .matrix-table th:first-child {
+    left: 0;
+    z-index: 3;
+    min-width: 140px;
+  }
+
+  .matrix-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: var(--surface2);
+    z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text2);
+    padding: 6px 10px;
+    white-space: nowrap;
+    min-width: 140px;
+    border-radius: 4px 0 0 4px;
+  }
+
+  .matrix-table thead th {
+    top: 0;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  .cell {
+    width: 72px;
+    height: 40px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    vertical-align: middle;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .cell:hover {
+    transform: scale(1.1);
+    z-index: 10;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+
+  .cell.empty {
+    background: var(--surface2);
+    color: var(--text3);
+    font-size: 16px;
+  }
+
+  /* HEAT LEVELS */
+  .h0 { background: var(--heat1); color: rgba(0,212,170,0.4); }
+  .h1 { background: var(--heat2); color: rgba(0,212,170,0.6); }
+  .h2 { background: var(--heat3); color: rgba(0,212,170,0.8); }
+  .h3 { background: var(--heat4); color: #000; }
+  .h4 { background: var(--heat5); color: #000; }
+  .h5 { background: var(--heat6); color: #000; }
+
+  /* TOOLTIP */
+  .tooltip {
+    position: fixed;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+    min-width: 160px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .tooltip.visible { opacity: 1; }
+
+  .tooltip-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    color: var(--text2);
+    font-size: 11px;
+    line-height: 1.8;
+  }
+
+  .tooltip-row .v {
+    font-family: var(--font-mono);
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--font-mono);
+  }
+
+  .legend-gradient {
+    height: 12px;
+    width: 200px;
+    border-radius: 6px;
+    background: linear-gradient(to right, var(--heat1), var(--heat2), var(--heat3), var(--heat5), var(--heat6));
+  }
+
+  /* GRID 2-COL */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 1100px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ANALYSIS TABLES */
+  .analysis-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .analysis-table thead th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .analysis-table thead th:hover { color: var(--accent); }
+
+  .analysis-table thead th.sort-asc::after { content: ' ↑'; color: var(--accent); }
+  .analysis-table thead th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+
+  .analysis-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  .analysis-table tbody tr:hover { background: var(--surface2); }
+
+  .analysis-table td {
+    padding: 10px 12px;
+    color: var(--text);
+  }
+
+  .analysis-table td.mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .analysis-table td.num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  /* BAR INLINE */
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .bar-fill {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--accent2), var(--accent));
+    min-width: 4px;
+    max-width: 120px;
+    transition: width 0.4s;
+  }
+  .bar-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text2);
+    white-space: nowrap;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .stat-card {
+    flex: 1;
+    min-width: 140px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-card.c0::before { background: var(--accent); }
+  .stat-card.c1::before { background: var(--accent2); }
+  .stat-card.c2::before { background: var(--accent3); }
+  .stat-card.c3::before { background: var(--warn); }
+  .stat-card.c4::before { background: var(--good); }
+
+  .stat-label {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .stat-value .unit { font-size: 13px; color: var(--text3); }
+
+  /* OPPORTUNITIES */
+  .opp-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    font-size: 13px;
+  }
+
+  .opp-row:last-child { border-bottom: none; }
+
+  .opp-client {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent2);
+  }
+
+  .opp-product {
+    font-size: 13px;
+    color: var(--text);
+  }
+
+  .opp-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: rgba(255,107,53,0.15);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 12px;
+    font-size: 10px;
+    font-family: var(--font-mono);
+    color: var(--accent3);
+    white-space: nowrap;
+  }
+
+  /* CHART CONTAINER */
+  .chart-wrap {
+    position: relative;
+    height: 220px;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; display: block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* MULTI-SELECT */
+  .multi-select-wrapper {
+    position: relative;
+  }
+
+  .multi-select-display {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    padding: 8px 32px 8px 12px;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .multi-select-display:hover, .multi-select-display.open {
+    border-color: var(--accent);
+  }
+
+  .multi-select-display .arrow {
+    font-size: 10px;
+    color: var(--text3);
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .multi-select-display .display-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .multi-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: var(--shadow);
+  }
+
+  .multi-select-dropdown.open { display: block; }
+
+  .multi-select-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text2);
+    transition: background 0.15s;
+  }
+
+  .multi-select-option:hover { background: var(--surface2); color: var(--text); }
+
+  .multi-select-option input[type=checkbox] {
+    accent-color: var(--accent);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .multi-select-option.select-all {
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  .badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    background: var(--accent);
+    color: #000;
+    border-radius: 9px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 0 5px;
+    margin-left: 6px;
+    flex-shrink: 0;
+  }
+
+  /* LOAD ANIMATION */
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card, .stats-row { animation: fadeSlideIn 0.4s ease both; }
+
+  .animated-1 { animation-delay: 0.1s; }
+  .animated-2 { animation-delay: 0.2s; }
+  .animated-3 { animation-delay: 0.3s; }
+  .animated-4 { animation-delay: 0.4s; }
+  .animated-5 { animation-delay: 0.5s; }
+</style>
+</head>
+<body>
+
+<!-- TOOLTIP -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tt-title"></div>
+  <div class="tooltip-row"><span>Cliente</span><span class="v" id="tt-client"></span></div>
+  <div class="tooltip-row"><span>Producto</span><span class="v" id="tt-product"></span></div>
+  <div class="tooltip-row"><span>Ventas</span><span class="v" id="tt-sales"></span></div>
+  <div class="tooltip-row"><span>Volumen</span><span class="v" id="tt-volume"></span></div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">M×</div>
+    <div class="logo-text">MATRIX<span>.</span>INTEL</div>
+  </div>
+  <div class="header-right">
+    <div class="metric-pill">Clientes <span class="val" id="hdr-clients">—</span></div>
+    <div class="metric-pill">Productos <span class="val" id="hdr-products">—</span></div>
+    <div class="metric-pill">Ventas Totales <span class="val" id="hdr-sales">—</span></div>
+    <button class="btn-import" id="btnReImport" style="display:none" onclick="document.getElementById('fileInput').click()">
+      ↑ Reimportar
+    </button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- UPLOAD ZONE -->
+  <div class="upload-zone" id="uploadZone">
+    <span class="upload-icon">📊</span>
+    <h2 class="upload-title">Importa tu Matriz Cliente–Producto</h2>
+    <p class="upload-sub">Arrastra tu archivo aquí o haz clic en el botón para seleccionarlo</p>
+    <button class="btn-import" onclick="document.getElementById('fileInput').click()">
+      ⬆ Importar Archivo Excel
+    </button>
+    <p class="format-hint">Formatos soportados: .xlsx · .xls · .csv &nbsp;|&nbsp; Columnas requeridas: Client, Product, Sales, Volume, Category</p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+
+    <!-- STATS ROW -->
+    <div class="stats-row animated-1">
+      <div class="stat-card c0">
+        <div class="stat-label">Total Ventas</div>
+        <div class="stat-value" id="st-sales">—</div>
+      </div>
+      <div class="stat-card c1">
+        <div class="stat-label">Clientes Activos</div>
+        <div class="stat-value" id="st-clients">—</div>
+      </div>
+      <div class="stat-card c2">
+        <div class="stat-label">Productos</div>
+        <div class="stat-value" id="st-products">—</div>
+      </div>
+      <div class="stat-card c3">
+        <div class="stat-label">Combinaciones</div>
+        <div class="stat-value" id="st-combos">—</div>
+      </div>
+      <div class="stat-card c4">
+        <div class="stat-label">Penetración Avg</div>
+        <div class="stat-value" id="st-penetration">—<span class="unit">%</span></div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-bar animated-2">
+      <div class="filter-group">
+        <label>Clientes</label>
+        <div class="multi-select-wrapper" id="ms-clients-wrap">
+          <div class="multi-select-display" id="ms-clients-display" onclick="toggleDropdown('clients')">
+            <span class="display-text">Todos los clientes</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown" id="ms-clients-dropdown"></div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Productos</label>
+        <div class="multi-select-wrapper" id="ms-products-wrap">
+          <div class="multi-select-display" id="ms-products-display" onclick="toggleDropdown('products')">
+            <span class="display-text">Todos los productos</span>
+            <span class="arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown" id="ms-products-dropdown"></div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Categoría</label>
+        <select id="f-category" onchange="applyFilters()">
+          <option value="">Todas</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Ventas Mínimas</label>
+        <input type="number" id="f-minsales" placeholder="0" min="0" oninput="applyFilters()" />
+      </div>
+      <div class="filter-group">
+        <label>Métrica Heatmap</label>
+        <div class="metric-toggle">
+          <button class="toggle-btn active" id="tb-sales" onclick="setMetric('sales')">Ventas</button>
+          <button class="toggle-btn" id="tb-volume" onclick="setMetric('volume')">Volumen</button>
+        </div>
+      </div>
+      <div class="filter-group" style="display:flex;align-items:flex-end;">
+        <button class="btn-clear" onclick="clearFilters()">✕ Limpiar filtros</button>
+      </div>
+    </div>
+
+    <!-- HEATMAP MATRIX -->
+    <div class="card animated-3">
+      <div class="section-header">
+        <div class="section-badge"></div>
+        <h3 class="section-title">MATRIZ CLIENTE × PRODUCTO</h3>
+        <span class="section-sub" id="matrix-subtitle">Intensidad de color = valor</span>
+      </div>
+      <div class="matrix-scroll" id="matrixContainer"></div>
+      <div class="legend">
+        <span>Bajo</span>
+        <div class="legend-gradient"></div>
+        <span>Alto</span>
+        <span style="margin-left:16px;color:var(--text3)">■ Sin ventas</span>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="grid-2">
+      <div class="card animated-4">
+        <div class="section-header">
+          <div class="section-badge blue"></div>
+          <h3 class="section-title">TOP VENTAS POR PRODUCTO</h3>
+        </div>
+        <div class="chart-wrap"><canvas id="chartProducts"></canvas></div>
+      </div>
+      <div class="card animated-4">
+        <div class="section-header">
+          <div class="section-badge orange"></div>
+          <h3 class="section-title">TOP VENTAS POR CLIENTE</h3>
+        </div>
+        <div class="chart-wrap"><canvas id="chartClients"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ANALYSIS A + B -->
+    <div class="grid-2">
+      <div class="card animated-5">
+        <div class="section-header">
+          <div class="section-badge blue"></div>
+          <h3 class="section-title">A · PENETRACIÓN DE PRODUCTO</h3>
+          <span class="section-sub">¿A cuántos clientes vendo cada producto?</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="analysis-table" id="tableA">
+            <thead>
+              <tr>
+                <th onclick="sortTable('A',0)">Producto</th>
+                <th onclick="sortTable('A',1)"># Clientes</th>
+                <th onclick="sortTable('A',2)">Total Ventas</th>
+                <th onclick="sortTable('A',3)">Penetración</th>
+              </tr>
+            </thead>
+            <tbody id="tableA-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card animated-5">
+        <div class="section-header">
+          <div class="section-badge orange"></div>
+          <h3 class="section-title">B · COBERTURA DE CLIENTE</h3>
+          <span class="section-sub">¿Cuántos productos compra cada cliente?</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="analysis-table" id="tableB">
+            <thead>
+              <tr>
+                <th onclick="sortTable('B',0)">Cliente</th>
+                <th onclick="sortTable('B',1)"># Productos</th>
+                <th onclick="sortTable('B',2)">Total Ventas</th>
+                <th onclick="sortTable('B',3)">Cobertura</th>
+              </tr>
+            </thead>
+            <tbody id="tableB-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- WHITE SPACE / OPPORTUNITIES -->
+    <div class="card animated-5">
+      <div class="section-header">
+        <div class="section-badge warn"></div>
+        <h3 class="section-title">C · ESPACIOS EN BLANCO — OPORTUNIDADES CROSS-SELL</h3>
+        <span class="section-sub" id="opp-count"></span>
+      </div>
+      <div id="oppContainer"></div>
+    </div>
+
+  </div><!-- /dashboard -->
+</main>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────
+let rawData = [];
+let filteredData = [];
+let activeMetric = 'sales';
+let selectedClients = new Set();
+let selectedProducts = new Set();
+let allClients = [];
+let allProducts = [];
+let chartProductsInst = null;
+let chartClientsInst = null;
+let sortState = { A: { col: 2, dir: 'desc' }, B: { col: 2, dir: 'desc' } };
+
+// ─── FILE INPUT ────────────────────────────────────────────────────
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      processData(json);
+    } catch(err) {
+      alert('Error leyendo el archivo: ' + err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+  e.target.value = '';
+});
+
+// DRAG & DROP
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('fileInput').files = dt.files;
+    document.getElementById('fileInput').dispatchEvent(new Event('change'));
+  }
+});
+
+// ─── PROCESS DATA ─────────────────────────────────────────────────
+function processData(json) {
+  // Normalize column names
+  rawData = json.map(row => {
+    const r = {};
+    Object.keys(row).forEach(k => {
+      const lk = k.toLowerCase().trim();
+      if (lk === 'client' || lk === 'cliente') r.client = String(row[k]).trim();
+      else if (lk === 'product' || lk === 'producto') r.product = String(row[k]).trim();
+      else if (lk === 'sales' || lk === 'ventas' || lk === 'venta') r.sales = parseFloat(row[k]) || 0;
+      else if (lk === 'volume' || lk === 'volumen') r.volume = parseFloat(row[k]) || 0;
+      else if (lk === 'category' || lk === 'categoria' || lk === 'categoría') r.category = String(row[k]).trim();
+    });
+    if (!r.client) r.client = 'Sin Cliente';
+    if (!r.product) r.product = 'Sin Producto';
+    if (!r.sales) r.sales = 0;
+    if (!r.volume) r.volume = 0;
+    if (!r.category) r.category = 'General';
+    return r;
+  }).filter(r => r.client && r.product);
+
+  if (rawData.length === 0) { alert('No se encontraron datos válidos. Verifica las columnas.'); return; }
+
+  allClients = [...new Set(rawData.map(r => r.client))].sort();
+  allProducts = [...new Set(rawData.map(r => r.product))].sort();
+  selectedClients = new Set(allClients);
+  selectedProducts = new Set(allProducts);
+
+  buildMultiSelect('clients', allClients, selectedClients, 'ms-clients-dropdown', 'ms-clients-display', 'Todos los clientes');
+  buildMultiSelect('products', allProducts, selectedProducts, 'ms-products-dropdown', 'ms-products-display', 'Todos los productos');
+  buildCategoryFilter();
+
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('btnReImport').style.display = 'flex';
+
+  applyFilters();
+}
+
+// ─── MULTI-SELECT ─────────────────────────────────────────────────
+function buildMultiSelect(id, items, selectedSet, dropdownId, displayId, placeholder) {
+  const dd = document.getElementById(dropdownId);
+  dd.innerHTML = '';
+
+  const allOpt = document.createElement('div');
+  allOpt.className = 'multi-select-option select-all';
+  allOpt.innerHTML = `<input type="checkbox" id="chk-all-${id}" ${selectedSet.size === items.length ? 'checked' : ''}> SELECCIONAR TODO`;
+  allOpt.querySelector('input').addEventListener('change', function() {
+    if (this.checked) items.forEach(i => selectedSet.add(i));
+    else selectedSet.clear();
+    buildMultiSelect(id, items, selectedSet, dropdownId, displayId, placeholder);
+    applyFilters();
+  });
+  dd.appendChild(allOpt);
+
+  items.forEach(item => {
+    const opt = document.createElement('div');
+    opt.className = 'multi-select-option';
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.checked = selectedSet.has(item);
+    chk.addEventListener('change', function() {
+      if (this.checked) selectedSet.add(item);
+      else selectedSet.delete(item);
+      buildMultiSelect(id, items, selectedSet, dropdownId, displayId, placeholder);
+      applyFilters();
+    });
+    opt.appendChild(chk);
+    opt.appendChild(document.createTextNode(item));
+    opt.addEventListener('click', e => { if (e.target !== chk) chk.click(); });
+    dd.appendChild(opt);
+  });
+
+  updateDisplayText(id, selectedSet, items, displayId, placeholder);
+}
+
+function updateDisplayText(id, selectedSet, items, displayId, placeholder) {
+  const disp = document.getElementById(displayId);
+  const txt = disp.querySelector('.display-text');
+  if (selectedSet.size === 0) txt.textContent = 'Ninguno seleccionado';
+  else if (selectedSet.size === items.length) txt.textContent = placeholder;
+  else if (selectedSet.size <= 2) txt.textContent = [...selectedSet].join(', ');
+  else txt.textContent = `${selectedSet.size} seleccionados`;
+
+  let badge = disp.querySelector('.badge-count');
+  if (selectedSet.size > 0 && selectedSet.size < items.length) {
+    if (!badge) { badge = document.createElement('span'); badge.className = 'badge-count'; disp.insertBefore(badge, disp.querySelector('.arrow')); }
+    badge.textContent = selectedSet.size;
+  } else if (badge) badge.remove();
+}
+
+function toggleDropdown(id) {
+  const dd = document.getElementById(`ms-${id}-dropdown`);
+  const disp = document.getElementById(`ms-${id}-display`);
+  const isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.multi-select-display').forEach(d => d.classList.remove('open'));
+  if (!isOpen) { dd.classList.add('open'); disp.classList.add('open'); }
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.multi-select-wrapper')) {
+    document.querySelectorAll('.multi-select-dropdown').forEach(d => d.classList.remove('open'));
+    document.querySelectorAll('.multi-select-display').forEach(d => d.classList.remove('open'));
+  }
+});
+
+function buildCategoryFilter() {
+  const cats = [...new Set(rawData.map(r => r.category))].sort();
+  const sel = document.getElementById('f-category');
+  sel.innerHTML = '<option value="">Todas</option>';
+  cats.forEach(c => { const o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o); });
+}
+
+// ─── FILTERS ──────────────────────────────────────────────────────
+function applyFilters() {
+  const cat = document.getElementById('f-category').value;
+  const minS = parseFloat(document.getElementById('f-minsales').value) || 0;
+
+  filteredData = rawData.filter(r =>
+    selectedClients.has(r.client) &&
+    selectedProducts.has(r.product) &&
+    (cat === '' || r.category === cat) &&
+    r.sales >= minS
+  );
+
+  updateStats();
+  renderMatrix();
+  renderTableA();
+  renderTableB();
+  renderOpportunities();
+  renderCharts();
+}
+
+function clearFilters() {
+  selectedClients = new Set(allClients);
+  selectedProducts = new Set(allProducts);
+  buildMultiSelect('clients', allClients, selectedClients, 'ms-clients-dropdown', 'ms-clients-display', 'Todos los clientes');
+  buildMultiSelect('products', allProducts, selectedProducts, 'ms-products-dropdown', 'ms-products-display', 'Todos los productos');
+  document.getElementById('f-category').value = '';
+  document.getElementById('f-minsales').value = '';
+  applyFilters();
+}
+
+function setMetric(m) {
+  activeMetric = m;
+  document.getElementById('tb-sales').classList.toggle('active', m === 'sales');
+  document.getElementById('tb-volume').classList.toggle('active', m === 'volume');
+  document.getElementById('matrix-subtitle').textContent = m === 'sales' ? 'Intensidad = Ventas ($)' : 'Intensidad = Volumen (unidades)';
+  renderMatrix();
+}
+
+// ─── STATS ────────────────────────────────────────────────────────
+function updateStats() {
+  const clients = [...new Set(filteredData.map(r => r.client))];
+  const products = [...new Set(filteredData.map(r => r.product))];
+  const totalSales = filteredData.reduce((a, r) => a + r.sales, 0);
+  const maxCombos = clients.length * products.length;
+  const actualCombos = filteredData.length;
+  const penetration = maxCombos > 0 ? (actualCombos / maxCombos * 100).toFixed(1) : 0;
+
+  document.getElementById('hdr-clients').textContent = clients.length;
+  document.getElementById('hdr-products').textContent = products.length;
+  document.getElementById('hdr-sales').textContent = '$' + fmtNum(totalSales);
+  document.getElementById('st-sales').textContent = '$' + fmtNum(totalSales);
+  document.getElementById('st-clients').textContent = clients.length;
+  document.getElementById('st-products').textContent = products.length;
+  document.getElementById('st-combos').textContent = actualCombos + '/' + maxCombos;
+  document.getElementById('st-penetration').innerHTML = penetration + '<span class="unit">%</span>';
+}
+
+// ─── HEATMAP MATRIX ───────────────────────────────────────────────
+function renderMatrix() {
+  const clients = [...new Set(filteredData.map(r => r.client))].sort();
+  const products = [...new Set(filteredData.map(r => r.product))].sort();
+
+  // Build lookup
+  const map = {};
+  filteredData.forEach(r => {
+    const key = `${r.client}||${r.product}`;
+    if (!map[key]) map[key] = { sales: 0, volume: 0 };
+    map[key].sales += r.sales;
+    map[key].volume += r.volume;
+  });
+
+  const vals = Object.values(map).map(v => v[activeMetric]);
+  const maxVal = Math.max(...vals, 1);
+
+  let html = '<table class="matrix-table"><thead><tr><th></th>';
+  clients.forEach(c => {
+    html += `<th title="${c}">${truncate(c, 10)}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  products.forEach(prod => {
+    html += `<tr><td>${truncate(prod, 18)}</td>`;
+    clients.forEach(cli => {
+      const key = `${cli}||${prod}`;
+      const d = map[key];
+      if (d) {
+        const v = d[activeMetric];
+        const intensity = v / maxVal;
+        const hClass = intensity < 0.15 ? 'h0' : intensity < 0.3 ? 'h1' : intensity < 0.5 ? 'h2' : intensity < 0.7 ? 'h3' : intensity < 0.9 ? 'h4' : 'h5';
+        const label = activeMetric === 'sales' ? '$' + fmtNum(v) : fmtNum(v);
+        html += `<td class="cell ${hClass}" data-client="${cli}" data-product="${prod}" data-sales="${d.sales}" data-volume="${d.volume}">${label}</td>`;
+      } else {
+        html += `<td class="cell empty" data-client="${cli}" data-product="${prod}" data-sales="0" data-volume="0">·</td>`;
+      }
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('matrixContainer').innerHTML = html;
+
+  // Tooltip events
+  document.querySelectorAll('.cell').forEach(cell => {
+    cell.addEventListener('mousemove', showTooltip);
+    cell.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// ─── TOOLTIP ──────────────────────────────────────────────────────
+const tooltip = document.getElementById('tooltip');
+function showTooltip(e) {
+  const c = e.currentTarget;
+  document.getElementById('tt-title').textContent = `${c.dataset.client} × ${c.dataset.product}`;
+  document.getElementById('tt-client').textContent = c.dataset.client;
+  document.getElementById('tt-product').textContent = c.dataset.product;
+  document.getElementById('tt-sales').textContent = '$' + fmtNum(c.dataset.sales);
+  document.getElementById('tt-volume').textContent = fmtNum(c.dataset.volume) + ' u';
+  tooltip.classList.add('visible');
+  positionTooltip(e);
+}
+function positionTooltip(e) {
+  const x = e.clientX + 14;
+  const y = e.clientY - 10;
+  tooltip.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+  tooltip.style.top = Math.min(y, window.innerHeight - 150) + 'px';
+}
+document.addEventListener('mousemove', e => { if (tooltip.classList.contains('visible')) positionTooltip(e); });
+function hideTooltip() { tooltip.classList.remove('visible'); }
+
+// ─── TABLE A — PRODUCT PENETRATION ───────────────────────────────
+function renderTableA() {
+  const clients = [...new Set(filteredData.map(r => r.client))];
+  const nClients = clients.length || 1;
+  const map = {};
+  filteredData.forEach(r => {
+    if (!map[r.product]) map[r.product] = { clients: new Set(), sales: 0 };
+    map[r.product].clients.add(r.client);
+    map[r.product].sales += r.sales;
+  });
+
+  let rows = Object.entries(map).map(([prod, d]) => ({
+    product: prod,
+    nClients: d.clients.size,
+    sales: d.sales,
+    pct: (d.clients.size / nClients * 100).toFixed(1)
+  }));
+
+  const s = sortState.A;
+  rows.sort((a, b) => {
+    const fields = ['product', 'nClients', 'sales', 'pct'];
+    const f = fields[s.col];
+    const va = typeof a[f] === 'string' ? a[f].toLowerCase() : a[f];
+    const vb = typeof b[f] === 'string' ? b[f].toLowerCase() : b[f];
+    return s.dir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+  });
+
+  const maxSales = Math.max(...rows.map(r => r.sales), 1);
+  const tbody = document.getElementById('tableA-body');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.product}</td>
+      <td class="num">${r.nClients}</td>
+      <td class="num">$${fmtNum(r.sales)}</td>
+      <td>
+        <div class="bar-cell">
+          <div class="bar-fill" style="width:${r.sales/maxSales*120}px"></div>
+          <span class="bar-label">${r.pct}%</span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  updateSortHeaders('A');
+}
+
+// ─── TABLE B — CLIENT COVERAGE ────────────────────────────────────
+function renderTableB() {
+  const products = [...new Set(filteredData.map(r => r.product))];
+  const nProducts = products.length || 1;
+  const map = {};
+  filteredData.forEach(r => {
+    if (!map[r.client]) map[r.client] = { products: new Set(), sales: 0 };
+    map[r.client].products.add(r.product);
+    map[r.client].sales += r.sales;
+  });
+
+  let rows = Object.entries(map).map(([cli, d]) => ({
+    client: cli,
+    nProducts: d.products.size,
+    sales: d.sales,
+    pct: (d.products.size / nProducts * 100).toFixed(1)
+  }));
+
+  const s = sortState.B;
+  rows.sort((a, b) => {
+    const fields = ['client', 'nProducts', 'sales', 'pct'];
+    const f = fields[s.col];
+    const va = typeof a[f] === 'string' ? a[f].toLowerCase() : a[f];
+    const vb = typeof b[f] === 'string' ? b[f].toLowerCase() : b[f];
+    return s.dir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+  });
+
+  const maxSales = Math.max(...rows.map(r => r.sales), 1);
+  const tbody = document.getElementById('tableB-body');
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td class="mono">${r.client}</td>
+      <td class="num">${r.nProducts}</td>
+      <td class="num">$${fmtNum(r.sales)}</td>
+      <td>
+        <div class="bar-cell">
+          <div class="bar-fill" style="width:${r.sales/maxSales*120}px"></div>
+          <span class="bar-label">${r.pct}%</span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  updateSortHeaders('B');
+}
+
+function sortTable(table, col) {
+  const s = sortState[table];
+  if (s.col === col) s.dir = s.dir === 'asc' ? 'desc' : 'asc';
+  else { s.col = col; s.dir = 'desc'; }
+  if (table === 'A') renderTableA();
+  else renderTableB();
+}
+
+function updateSortHeaders(table) {
+  const s = sortState[table];
+  const ths = document.querySelectorAll(`#table${table} thead th`);
+  ths.forEach((th, i) => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if (i === s.col) th.classList.add(`sort-${s.dir}`);
+  });
+}
+
+// ─── OPPORTUNITIES ────────────────────────────────────────────────
+function renderOpportunities() {
+  const allClients2 = [...new Set(filteredData.map(r => r.client))];
+  const allProds = [...new Set(filteredData.map(r => r.product))];
+
+  // Build client→products map
+  const clientProds = {};
+  filteredData.forEach(r => {
+    if (!clientProds[r.client]) clientProds[r.client] = new Set();
+    clientProds[r.client].add(r.product);
+  });
+
+  // Co-purchase frequency: product A → product B
+  const coFreq = {};
+  allProds.forEach(p => {
+    coFreq[p] = {};
+    allProds.forEach(q => { if (p !== q) coFreq[p][q] = 0; });
+  });
+
+  allClients2.forEach(cli => {
+    const prods = [...(clientProds[cli] || [])];
+    prods.forEach(p => {
+      prods.forEach(q => { if (p !== q && coFreq[p]) coFreq[p][q]++; });
+    });
+  });
+
+  // For each client, find products they don't buy but co-appear strongly
+  const opps = [];
+  allClients2.forEach(cli => {
+    const bought = clientProds[cli] || new Set();
+    const notBought = allProds.filter(p => !bought.has(p));
+
+    notBought.forEach(missing => {
+      let score = 0;
+      [...bought].forEach(b => { score += (coFreq[b] && coFreq[b][missing]) ? coFreq[b][missing] : 0; });
+      if (score > 0) opps.push({ client: cli, product: missing, score });
+    });
+  });
+
+  opps.sort((a, b) => b.score - a.score);
+  const top = opps.slice(0, 30);
+
+  document.getElementById('opp-count').textContent = `${top.length} oportunidades detectadas`;
+
+  if (top.length === 0) {
+    document.getElementById('oppContainer').innerHTML = `<div class="empty-state"><span class="icon">✅</span>Sin espacios en blanco detectados para los filtros actuales.</div>`;
+    return;
+  }
+
+  const html = `
+    <div style="overflow-x:auto;">
+      <table class="analysis-table">
+        <thead><tr>
+          <th>Cliente</th>
+          <th>Producto No Comprado</th>
+          <th>Score de Oportunidad</th>
+          <th>Clientes que combinan</th>
+        </tr></thead>
+        <tbody>
+          ${top.map(o => `
+            <tr>
+              <td class="mono" style="color:var(--accent2)">${o.client}</td>
+              <td>${o.product}</td>
+              <td>
+                <div class="bar-cell">
+                  <div class="bar-fill" style="width:${Math.min(o.score/top[0].score*120,120)}px;background:linear-gradient(to right,var(--warn),var(--accent3))"></div>
+                  <span class="bar-label">${o.score}</span>
+                </div>
+              </td>
+              <td><span class="opp-tag">🎯 Cross-sell</span></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('oppContainer').innerHTML = html;
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────
+function renderCharts() {
+  // Product chart
+  const prodMap = {};
+  filteredData.forEach(r => { prodMap[r.product] = (prodMap[r.product] || 0) + r.sales; });
+  const sortedProds = Object.entries(prodMap).sort((a,b) => b[1]-a[1]).slice(0, 12);
+
+  // Client chart
+  const cliMap = {};
+  filteredData.forEach(r => { cliMap[r.client] = (cliMap[r.client] || 0) + r.sales; });
+  const sortedClis = Object.entries(cliMap).sort((a,b) => b[1]-a[1]).slice(0, 12);
+
+  const chartCfg = (labels, data, color1, color2) => ({
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: labels.map((_, i) => `rgba(${color1},${1 - i/labels.length * 0.6})`),
+        borderColor: `rgba(${color2},0.8)`,
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: '#5a6380', font: { family: 'Space Mono', size: 10 }, callback: v => '$' + fmtNum(v) }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#9aa3b8', font: { family: 'DM Sans', size: 11 } }
+        }
+      }
+    }
+  });
+
+  if (chartProductsInst) chartProductsInst.destroy();
+  if (chartClientsInst) chartClientsInst.destroy();
+
+  const ctx1 = document.getElementById('chartProducts').getContext('2d');
+  const ctx2 = document.getElementById('chartClients').getContext('2d');
+
+  chartProductsInst = new Chart(ctx1, chartCfg(
+    sortedProds.map(e => truncate(e[0], 18)),
+    sortedProds.map(e => e[1]),
+    '0,153,255', '0,153,255'
+  ));
+
+  chartClientsInst = new Chart(ctx2, chartCfg(
+    sortedClis.map(e => truncate(e[0], 18)),
+    sortedClis.map(e => e[1]),
+    '255,107,53', '255,107,53'
+  ));
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────
+function fmtNum(n) {
+  n = parseFloat(n) || 0;
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+  return n.toLocaleString('es-MX', { maximumFractionDigits: 0 });
+}
+
+function truncate(str, len) {
+  return str.length > len ? str.slice(0, len) + '…' : str;
+}
+
+// ─── DEMO DATA (auto-load on click) ───────────────────────────────
+// Loads sample data so user can preview without a file
+document.getElementById('uploadZone').addEventListener('dblclick', () => {
+  const demo = [
+    {Client:'Rest. La Fogata',Product:'Salmón Lomo',Sales:15200,Volume:320,Category:'Pescado'},
+    {Client:'Rest. La Fogata',Product:'Atún Aleta',Sales:8400,Volume:210,Category:'Pescado'},
+    {Client:'Rest. La Fogata',Product:'Camarón U15',Sales:12000,Volume:150,Category:'Marisco'},
+    {Client:'Rest. La Fogata',Product:'Pulpo Baby',Sales:4200,Volume:80,Category:'Marisco'},
+    {Client:'Hotel Misión',Product:'Salmón Lomo',Sales:32000,Volume:640,Category:'Pescado'},
+    {Client:'Hotel Misión',Product:'Camarón U15',Sales:18500,Volume:230,Category:'Marisco'},
+    {Client:'Hotel Misión',Product:'Mejillón NZ',Sales:6300,Volume:120,Category:'Marisco'},
+    {Client:'Hotel Misión',Product:'Tilapia Filete',Sales:9100,Volume:400,Category:'Pescado'},
+    {Client:'Hotel Misión',Product:'Pulpo Baby',Sales:7800,Volume:140,Category:'Marisco'},
+    {Client:'Catering Vega',Product:'Tilapia Filete',Sales:22000,Volume:950,Category:'Pescado'},
+    {Client:'Catering Vega',Product:'Camarón U15',Sales:14000,Volume:175,Category:'Marisco'},
+    {Client:'Catering Vega',Product:'Salmón Lomo',Sales:8900,Volume:180,Category:'Pescado'},
+    {Client:'Club Deportivo',Product:'Atún Aleta',Sales:5600,Volume:140,Category:'Pescado'},
+    {Client:'Club Deportivo',Product:'Salmón Lomo',Sales:4200,Volume:85,Category:'Pescado'},
+    {Client:'Club Deportivo',Product:'Tilapia Filete',Sales:11000,Volume:480,Category:'Pescado'},
+    {Client:'Buffet Premier',Product:'Salmón Lomo',Sales:41000,Volume:820,Category:'Pescado'},
+    {Client:'Buffet Premier',Product:'Camarón U15',Sales:28000,Volume:350,Category:'Marisco'},
+    {Client:'Buffet Premier',Product:'Pulpo Baby',Sales:15000,Volume:280,Category:'Marisco'},
+    {Client:'Buffet Premier',Product:'Mejillón NZ',Sales:9200,Volume:175,Category:'Marisco'},
+    {Client:'Buffet Premier',Product:'Atún Aleta',Sales:17000,Volume:425,Category:'Pescado'},
+    {Client:'Buffet Premier',Product:'Tilapia Filete',Sales:13500,Volume:590,Category:'Pescado'},
+    {Client:'Tacos El Gallo',Product:'Camarón U15',Sales:3200,Volume:40,Category:'Marisco'},
+    {Client:'Tacos El Gallo',Product:'Pulpo Baby',Sales:2800,Volume:55,Category:'Marisco'},
+    {Client:'Rest. Sakura',Product:'Salmón Lomo',Sales:19000,Volume:380,Category:'Pescado'},
+    {Client:'Rest. Sakura',Product:'Atún Aleta',Sales:22000,Volume:550,Category:'Pescado'},
+    {Client:'Rest. Sakura',Product:'Mejillón NZ',Sales:8700,Volume:165,Category:'Marisco'},
+  ];
+  processData(demo);
+});
+</script>
+</body>
+</html>

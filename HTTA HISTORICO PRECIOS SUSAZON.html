@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Histórico de Precios · Susazón</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{
+  --bg:#080a0f;--surf:#10131c;--surf2:#161b27;--surf3:#1d2235;--border:#222840;
+  --accent:#c8a84b;--accent2:#e8cc80;
+  --danger:#c0392b;--success:#1e8449;--info:#1a5276;--warn:#d35400;
+  --text:#dde3f0;--muted:#5a6480;--muted2:#8090b0;
+  --ff:'DM Sans',sans-serif;--fd:'Bebas Neue',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--ff);min-height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 55% 35%,#141930,var(--bg))}
+.lg-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lg-bg::before{content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(34,40,64,.4) 1px,transparent 1px),linear-gradient(90deg,rgba(34,40,64,.4) 1px,transparent 1px);
+  background-size:60px 60px;opacity:.35}
+.lg-line{position:absolute;top:0;left:50%;width:1px;height:100%;
+  background:linear-gradient(to bottom,transparent,var(--accent),transparent);opacity:.15}
+.lg-card{position:relative;width:420px;max-width:94vw;background:var(--surf);
+  border:1px solid var(--border);border-top:3px solid var(--accent);
+  padding:48px 40px 38px;box-shadow:0 48px 96px rgba(0,0,0,.7);
+  animation:lgIn .4s cubic-bezier(.22,1,.36,1) both}
+@keyframes lgIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.lg-logo{font-family:var(--fd);font-size:42px;letter-spacing:2px;color:var(--accent);line-height:1}
+.lg-sub{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-top:4px;margin-bottom:36px}
+.lg-sep{width:36px;height:2px;background:var(--accent);margin-bottom:10px}
+.lg-f{margin-bottom:14px}
+.lg-f label{display:block;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.lg-f input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:13px;padding:11px 13px;outline:none;transition:border-color .2s}
+.lg-f input:focus{border-color:var(--accent)}
+.lg-btn{width:100%;margin-top:22px;background:var(--accent);color:#000;border:none;
+  font-family:var(--fd);font-size:19px;letter-spacing:3px;padding:13px;
+  cursor:pointer;transition:background .2s,transform .1s}
+.lg-btn:hover{background:var(--accent2)}.lg-btn:active{transform:scale(.98)}
+.lg-err{margin-top:12px;padding:9px 12px;background:rgba(192,57,43,.1);
+  border:1px solid rgba(192,57,43,.35);color:#e07070;font-size:12px;display:none}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#0d1020,#151a2e);border-bottom:1px solid var(--border);
+  padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;position:relative;z-index:10}
+.hdr-brand{display:flex;align-items:baseline;gap:10px;flex-shrink:0}
+.hdr-brand h1{font-family:var(--fd);font-size:24px;letter-spacing:2px;color:var(--accent);line-height:1}
+.hdr-brand span{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted)}
+.hdr-r{display:flex;gap:6px;align-items:center}
+.hdr-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.hdr-sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;border:none;cursor:pointer;
+  font-family:var(--ff);font-size:11px;font-weight:600;padding:6px 12px;transition:all .18s;white-space:nowrap}
+.btn-gold{background:var(--accent);color:#000}.btn-gold:hover{background:var(--accent2)}
+.btn-sec{background:var(--surf3);color:var(--text);border:1px solid var(--border)}
+.btn-sec:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(192,57,43,.1);color:#e07070;border:1px solid rgba(192,57,43,.2)}
+.btn-danger:hover{background:rgba(192,57,43,.18)}
+.btn-suc{background:rgba(30,132,73,.1);color:#5dbb85;border:1px solid rgba(30,132,73,.2)}
+.btn-suc:hover{background:rgba(30,132,73,.18)}
+.btn-info{background:rgba(26,82,118,.15);color:#79b8e8;border:1px solid rgba(26,82,118,.3)}
+.btn-info:hover{background:rgba(26,82,118,.25)}
+.btn-warn{background:rgba(211,84,0,.1);color:#f0a050;border:1px solid rgba(211,84,0,.2)}
+.btn-warn:hover{background:rgba(211,84,0,.18)}
+
+/* LAYOUT */
+.app-body{display:grid;grid-template-columns:250px 1fr;height:calc(100vh - 54px)}
+
+/* SIDEBAR */
+.sidebar{background:var(--surf);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden}
+.sb-sec{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:700}
+.sb-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:12px;padding:6px 9px;outline:none;transition:border .2s}
+.sb-input:focus{border-color:var(--accent)}
+.prov-list{display:flex;flex-direction:column;gap:3px}
+.prov-row{display:flex;align-items:center;gap:7px;padding:5px 7px;cursor:pointer;
+  border:1px solid transparent;transition:all .12s;border-radius:1px}
+.prov-row:hover{background:var(--surf2)}
+.prov-row.on{border-color:rgba(200,168,75,.3);background:rgba(200,168,75,.05)}
+.prov-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.prov-lbl{font-size:11px;font-weight:600;flex:1}
+.prov-cnt{font-size:10px;color:var(--muted)}
+.prov-chk{accent-color:var(--accent)}
+.sku-scroll{flex:1;overflow-y:auto}
+.sku-item{padding:6px 14px;font-size:11px;cursor:pointer;border-left:2px solid transparent;
+  transition:all .1s;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sku-item{display:flex;align-items:center;justify-content:space-between;padding:0!important}
+.sku-name{flex:1;padding:6px 10px 6px 14px;cursor:pointer;font-size:11px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+.sku-badge{display:block;font-size:9px;color:var(--muted);letter-spacing:.5px;margin-top:1px;font-weight:400}
+.sku-item:hover .sku-name{color:var(--accent)}
+.sku-item.active .sku-name{color:var(--accent);font-weight:700}
+.sku-item.active{border-left-color:var(--accent);background:rgba(200,168,75,.07)}
+.sku-acts{display:flex;gap:2px;padding:0 6px;opacity:0;transition:opacity .15s;flex-shrink:0}
+.sku-item:hover .sku-acts{opacity:1}
+.sku-act-btn{background:transparent;border:none;cursor:pointer;font-size:12px;padding:3px 5px;
+  border-radius:2px;transition:background .12s,color .12s}
+.sku-edit{color:var(--muted2)}.sku-edit:hover{color:#79b8e8;background:rgba(74,158,255,.1)}
+.sku-del{color:var(--muted2)}.sku-del:hover{color:#e07070;background:rgba(192,57,43,.1)}
+.sku-item.active{border-left-color:var(--accent);background:rgba(200,168,75,.07);color:var(--accent);font-weight:700}
+
+/* CONTENT AREA */
+.content{display:flex;flex-direction:column;overflow:hidden}
+
+/* CTRL BAR */
+.ctrl-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 18px;
+  background:var(--surf);border-bottom:1px solid var(--border);flex-shrink:0}
+.vsep{width:1px;height:22px;background:var(--border)}
+.view-tabs{display:flex}
+.vtab{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  padding:6px 13px;cursor:pointer;border:1px solid var(--border);background:transparent;
+  color:var(--muted);transition:all .15s;font-family:var(--ff)}
+.vtab:first-child{border-right:none}
+.vtab.active{background:var(--accent);color:#000;border-color:var(--accent)}
+.period-btns{display:flex;gap:3px}
+.pbtn{font-size:10px;font-weight:700;padding:5px 10px;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  transition:all .15s;font-family:var(--ff)}
+.pbtn.active{border-color:var(--accent);color:var(--accent);background:rgba(200,168,75,.08)}
+.drange{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
+.drange input{background:var(--surf2);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:10px;padding:4px 7px;outline:none;width:105px}
+.drange input:focus{border-color:var(--accent)}
+
+/* PANELS */
+.panels{flex:1;overflow:hidden}
+.panel{display:none;height:100%;flex-direction:column}
+.panel.active{display:flex}
+
+/* CHART PANEL */
+.chart-scroll{flex:1;overflow-y:auto;padding:14px 18px}
+.chart-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.chart-ttl{font-family:var(--fd);font-size:20px;letter-spacing:1px;color:var(--text)}
+.chart-sub{font-size:10px;color:var(--muted);margin-top:2px}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:12px}
+.cstat{background:var(--surf);border:1px solid var(--border);border-top:2px solid var(--accent);padding:10px 13px}
+.cstat.up{border-top-color:#27ae60}.cstat.dn{border-top-color:#c0392b}
+.cstat-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.cstat-val{font-family:var(--fd);font-size:26px;line-height:1}
+.cstat.up .cstat-val{color:#5dbb85}.cstat.dn .cstat-val{color:#e07070}
+.cstat-sub{font-size:10px;color:var(--muted2);margin-top:1px}
+.chart-box{background:var(--surf);border:1px solid var(--border);padding:14px;position:relative}
+.chart-box canvas{max-height:340px}
+.no-sel{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;
+  color:var(--muted);gap:10px}
+.no-sel-icon{font-size:44px;opacity:.18}
+
+/* TABLE PANEL */
+.tbl-scroll{flex:1;overflow:auto;padding:14px 18px}
+.tbl-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+.tbl-info{font-family:var(--fd);font-size:18px;letter-spacing:1px}
+.tbl-cnt{font-size:10px;color:var(--muted);margin-left:8px}
+.price-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.price-tbl thead{position:sticky;top:0;z-index:2}
+.price-tbl thead tr{background:var(--surf2)}
+.price-tbl th{padding:8px 11px;text-align:left;font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);
+  white-space:nowrap;cursor:pointer}
+.price-tbl th:hover{color:var(--text)}.price-tbl th.r{text-align:right}
+.price-tbl tbody tr{border-bottom:1px solid rgba(34,40,64,.5);transition:background .1s}
+.price-tbl tbody tr:hover{background:rgba(255,255,255,.02)}
+.price-tbl td{padding:7px 11px;vertical-align:middle}
+.td-r{text-align:right;font-variant-numeric:tabular-nums}
+.td-sku{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-prov{font-size:11px;font-weight:700}
+.td-date{color:var(--muted2);font-size:11px}
+.td-price{font-weight:700;color:var(--accent)}
+.chg-up{font-size:10px;font-weight:700;color:#5dbb85}
+.chg-dn{font-size:10px;font-weight:700;color:#e07070}
+.chg-flat{font-size:10px;color:var(--muted)}
+.price-inp{width:76px;text-align:right;background:rgba(200,168,75,.12);
+  border:1px solid var(--accent);color:var(--text);font-family:var(--ff);
+  font-size:11px;padding:3px 6px;outline:none}
+.tbl-box{border:1px solid var(--border);overflow:auto;max-height:calc(100vh - 185px)}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surf);border:1px solid var(--border);border-top:3px solid var(--accent);
+  width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;padding:26px 24px 20px;
+  animation:mIn .2s ease}
+@keyframes mIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.modal-h{font-family:var(--fd);font-size:22px;letter-spacing:1px;color:var(--accent);margin-bottom:16px}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.cfull{grid-column:1/-1}
+.ff-{display:flex;flex-direction:column;gap:5px}
+.ff- label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.ff- input,.ff- select{background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:12px;padding:7px 10px;outline:none;transition:border .2s}
+.ff- input:focus,.ff- select:focus{border-color:var(--accent)}
+.sku-multi{max-height:170px;overflow-y:auto;border:1px solid var(--border);background:var(--bg)}
+.sc-row{display:flex;align-items:center;gap:7px;padding:5px 9px;cursor:pointer;transition:background .1s}
+.sc-row:hover{background:var(--surf2)}
+.sc-row input{accent-color:var(--accent);width:12px;height:12px}
+.sc-row span{font-size:11px}
+.prov-btns{display:flex;gap:6px;flex-wrap:wrap;padding:3px 0}
+.pbtn-tog{padding:4px 11px;font-size:10px;font-weight:700;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  transition:all .15s;font-family:var(--ff)}
+.pbtn-tog.on{border-color:var(--accent);color:var(--accent);background:rgba(200,168,75,.08)}
+.mfooter{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
+.imp-drop{border:2px dashed var(--border);padding:24px;text-align:center;color:var(--muted);
+  cursor:pointer;transition:all .2s;margin-bottom:10px}
+.imp-drop:hover,.imp-drop.on{border-color:var(--accent);color:var(--accent)}
+
+.ap-row td{padding:4px 6px;border-bottom:1px solid rgba(34,40,64,.5)}
+.ap-row:hover td{background:rgba(255,255,255,.015)}
+.ap-inp-sku{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:12px;padding:6px 9px;outline:none;transition:border .2s}
+.ap-inp-sku:focus{border-color:var(--accent)}
+.ap-inp-price{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:12px;padding:6px 9px;outline:none;text-align:right;transition:border .2s}
+.ap-inp-price:focus{border-color:var(--accent)}
+.ap-inp-price.filled{border-color:rgba(200,168,75,.4);background:rgba(200,168,75,.05)}
+.ap-row-num{color:var(--muted);font-size:11px;text-align:center;user-select:none}
+.ap-del{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 6px;transition:color .15s}
+.ap-del:hover{color:#e07070}
+
+/* PDF IMPORT */
+.pdf-drop{border:2px dashed var(--border);padding:28px;text-align:center;color:var(--muted);
+  cursor:pointer;transition:all .2s;margin-bottom:12px;position:relative}
+.pdf-drop:hover,.pdf-drop.on{border-color:#b57bee;color:#b57bee;background:rgba(181,123,238,.04)}
+.pdf-drop-icon{font-size:32px;margin-bottom:8px}
+.pdf-preview-tbl{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+.pdf-preview-tbl thead tr{background:var(--surf2)}
+.pdf-preview-tbl th{padding:7px 10px;text-align:left;font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+.pdf-preview-tbl th.r{text-align:right}
+.pdf-preview-tbl tbody tr{border-bottom:1px solid rgba(34,40,64,.5)}
+.pdf-preview-tbl td{padding:6px 10px;vertical-align:middle}
+.pdf-match-ok{color:#5dbb85;font-size:11px}
+.pdf-match-warn{color:#f0a050;font-size:11px}
+.pdf-match-miss{color:#e07070;font-size:11px}
+.unmatched-section{margin-top:12px;padding:10px 14px;background:rgba(240,160,80,.07);
+  border:1px solid rgba(240,160,80,.2)}
+.unmatched-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;
+  padding:5px 0;border-bottom:1px solid rgba(34,40,64,.4)}
+.unmatched-row:last-child{border-bottom:none}
+.map-select{background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:11px;padding:4px 8px;outline:none;width:100%}
+.map-select:focus{border-color:var(--accent)}
+.pdf-stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:11px}
+.pdf-stat{display:flex;align-items:center;gap:5px}
+
+/* CALCULATOR BOTTOM BAR */
+.calc-bar{
+  flex-shrink:0;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 18px;
+  background:var(--surf);
+  border-top:1px solid var(--border);
+}
+.calc-bar-title{
+  font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted2);white-space:nowrap;flex-shrink:0;
+}
+.calc-bar-sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+.calc-bar-sel{
+  background:var(--surf2);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:12px;padding:6px 10px;outline:none;cursor:pointer;
+  transition:border .15s;
+}
+.calc-bar-sel:focus{border-color:var(--accent)}
+.calc-bar-inp{
+  width:90px;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:13px;padding:6px 10px;outline:none;
+  text-align:right;transition:border .15s;
+}
+.calc-bar-inp:focus{border-color:var(--accent)}
+.calc-bar-inp.tc{
+  width:80px;border-color:rgba(200,168,75,.4);color:var(--accent);font-weight:600;
+}
+.calc-bar-inp.tc:focus{border-color:var(--accent)}
+.calc-bar-swap{
+  background:var(--surf2);border:1px solid var(--border);color:var(--muted2);
+  font-size:15px;padding:5px 9px;cursor:pointer;transition:all .15s;
+}
+.calc-bar-swap:hover{border-color:var(--accent);color:var(--accent)}
+.calc-bar-result{
+  font-family:var(--fd);font-size:26px;color:var(--accent2);
+  letter-spacing:.5px;line-height:1;white-space:nowrap;
+}
+
+/* TOAST */
+#toast{position:fixed;bottom:18px;right:18px;z-index:9999;background:var(--surf2);
+  border:1px solid var(--border);border-left:3px solid var(--success);
+  color:var(--text);font-size:12px;padding:9px 14px;box-shadow:0 8px 24px rgba(0,0,0,.5);
+  transform:translateY(80px);opacity:0;transition:all .25s;max-width:280px}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.err{border-left-color:var(--danger)}
+</style>
+</head>
+<body>
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="lg-bg"><div class="lg-line"></div></div>
+  <div class="lg-card">
+    <div class="lg-logo">PRECIOS MP</div>
+    <div class="lg-sub">Histórico de Precios · Susazón</div>
+    <div class="lg-sep"></div>
+    <div class="lg-f">
+      <label>Usuario</label>
+      <input type="text" id="l-user" placeholder="username" autocomplete="username">
+    </div>
+    <div class="lg-f">
+      <label>Contraseña</label>
+      <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="lg-btn" onclick="doLogin()">INGRESAR</button>
+    <div class="lg-err" id="lg-err">⚠ Usuario o contraseña incorrectos.</div>
+  </div>
+</div>
+
+<header class="hdr">
+  <div class="hdr-brand">
+    <h1>PRECIOS MP</h1>
+    <span>Histórico · Susazón</span>
+  </div>
+  <div class="hdr-r">
+    <div class="hdr-actions">
+      <button class="btn btn-info" onclick="openModal('m-import')">&#x2B06; Importar Excel</button>
+      <button class="btn" style="background:rgba(139,92,246,.15);color:#b57bee;border:1px solid rgba(139,92,246,.3)" onclick="openModal('m-import-pdf')">&#x1F4C4; Importar PDF</button>
+      <button id="btn-undo-import" class="btn btn-danger" onclick="undoLastImport()" style="display:none" title="Revertir última importación">&#x21A9; Revertir</button>
+      <button class="btn btn-suc" onclick="exportExcel()">&#x2B07; Exportar Excel</button>
+      <button class="btn btn-warn" onclick="exportPDF()">&#x2B07; Exportar PDF</button>
+      <button class="btn btn-sec" onclick="addPriceEntry()">&#xFF0B; Agregar precio</button>
+      <button class="btn btn-gold" onclick="openModal('m-chart-cfg')">&#x1F4C8; Nueva gr&#225;fica</button>
+    </div>
+    <div class="hdr-sep"></div>
+    <button class="btn btn-sec" onclick="doLogout()" style="color:var(--muted);padding:6px 10px" title="Cerrar sesión">&#x2715; Salir</button>
+  </div>
+</header>
+
+<div class="app-body">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-sec">
+      <div class="sb-title">Proveedores</div>
+      <div class="prov-list" id="prov-list"></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-title">Productos</div>
+      <input class="sb-input" id="sku-search" placeholder="Filtrar&#8230;" oninput="filterSkus()">
+    </div>
+    <div class="sku-scroll" id="sku-list"></div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="ctrl-bar">
+      <div class="view-tabs">
+        <button class="vtab active" onclick="switchView('chart',this)">&#x1F4C8; Gr&#225;fica</button>
+        <button class="vtab" onclick="switchView('table',this)">&#x1F4CB; Tabla</button>
+      </div>
+      <div class="vsep"></div>
+      <span style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase">Per&#237;odo</span>
+      <div class="period-btns">
+        <button class="pbtn active" onclick="setPeriod('week',this)">Semana</button>
+        <button class="pbtn" onclick="setPeriod('month',this)">Mes</button>
+        <button class="pbtn" onclick="setPeriod('year',this)">A&#241;o</button>
+        <button class="pbtn" onclick="setPeriod('all',this)">Todo</button>
+        <button class="pbtn" onclick="setPeriod('custom',this)">Rango</button>
+      </div>
+      <div class="drange" id="custom-range" style="display:none">
+        <input type="date" id="range-from" onchange="applyCustomRange()">
+        <span>&#8212;</span>
+        <input type="date" id="range-to" onchange="applyCustomRange()">
+      </div>
+    </div>
+
+    <div class="panels">
+      <!-- CHART -->
+      <div class="panel active" id="panel-chart">
+        <div class="chart-scroll" id="chart-scroll">
+          <div class="no-sel" id="chart-nodata" style="height:400px">
+            <div class="no-sel-icon">&#x1F4CA;</div>
+            <p style="font-size:13px">Selecciona un producto para ver su historial</p>
+          </div>
+          <div id="chart-content" style="display:none">
+            <div class="chart-hdr">
+              <div>
+                <div class="chart-ttl" id="chart-title"></div>
+                <div class="chart-sub" id="chart-sub"></div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-sec" onclick="openModal('m-chart-cfg')">&#x2699; Config</button>
+                <button class="btn btn-warn" onclick="exportChartPDF()">&#x2B07; PDF</button>
+              </div>
+            </div>
+            <div class="stats-row" id="chart-stats"></div>
+            <div class="chart-box">
+              <canvas id="main-chart" style="max-height:340px"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="panel" id="panel-table">
+        <div class="tbl-scroll">
+          <div class="tbl-controls">
+            <div>
+              <span class="tbl-info" id="tbl-title">Todos los precios</span>
+              <span class="tbl-cnt" id="tbl-cnt"></span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="sb-input" style="width:150px;margin:0" id="tbl-search" placeholder="Buscar&#8230;" oninput="renderTable()">
+              <input type="checkbox" id="sel-all" style="accent-color:var(--accent)" onchange="toggleAll(this)">
+              <label for="sel-all" style="font-size:11px;color:var(--muted)">Selec. todo</label>
+              <button class="btn btn-danger" onclick="deleteSelected()">&#x1F5D1; Eliminar</button>
+            </div>
+          </div>
+          <div class="tbl-box">
+            <table class="price-tbl">
+              <thead><tr>
+                <th></th>
+                <th onclick="sortBy('sku')">SKU &#x21D5;</th>
+                <th onclick="sortBy('prov')">Proveedor &#x21D5;</th>
+                <th onclick="sortBy('date')">Fecha &#x21D5;</th>
+                <th class="r" onclick="sortBy('price')">Precio &#x21D5;</th>
+                <th class="r">Variaci&#243;n</th>
+                <th>Acciones</th>
+              </tr></thead>
+              <tbody id="tbl-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div><!-- /panels -->
+
+    <!-- CURRENCY CALCULATOR BAR -->
+    <div class="calc-bar">
+      <span class="calc-bar-title">&#x1F4B1; Calculadora</span>
+      <div class="calc-bar-sep"></div>
+
+      <select id="calc-from" class="calc-bar-sel" onchange="calcDynamic()">
+        <option value="usd_lb">USD / lb</option>
+        <option value="usd_kg">USD / kg</option>
+        <option value="mxn_kg">MXN / kg</option>
+        <option value="mxn_lb">MXN / lb</option>
+      </select>
+
+      <input id="calc-val" type="number" min="0" step="0.01" placeholder="0.00"
+        class="calc-bar-inp" oninput="calcDynamic()">
+
+      <button class="calc-bar-swap" onclick="swapCalc()" title="Intercambiar">&#x21C4;</button>
+
+      <select id="calc-to" class="calc-bar-sel" onchange="calcDynamic()">
+        <option value="mxn_kg">MXN / kg</option>
+        <option value="mxn_lb">MXN / lb</option>
+        <option value="usd_lb">USD / lb</option>
+        <option value="usd_kg">USD / kg</option>
+      </select>
+
+      <div class="calc-bar-sep"></div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+        <span style="font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">T/C MXN/USD</span>
+        <input id="calc-tc" type="number" min="0" step="0.01" placeholder="20.00"
+          class="calc-bar-inp tc" oninput="calcDynamic()">
+      </div>
+
+      <div class="calc-bar-sep"></div>
+
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="font-size:10px;color:var(--muted)" id="calc-result-lbl">= MXN / kg</span>
+        <span class="calc-bar-result" id="calc-result">—</span>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL: CHART CONFIG -->
+<div class="overlay" id="m-chart-cfg">
+  <div class="modal">
+    <div class="modal-h">CONFIGURAR GR&#193;FICA</div>
+    <div class="cgrid">
+      <div class="ff- cfull">
+        <label>SKUs a comparar</label>
+        <div class="sku-multi" id="cfg-skus"></div>
+      </div>
+      <div class="ff-">
+        <label>Proveedores</label>
+        <div class="prov-btns" id="cfg-provs"></div>
+      </div>
+      <div class="ff-">
+        <label>Tipo de gr&#225;fica</label>
+        <select id="cfg-type"><option value="line">L&#237;nea</option><option value="bar">Barras</option></select>
+      </div>
+      <div class="ff-">
+        <label>Agrupaci&#243;n</label>
+        <select id="cfg-grp"><option value="day">Diario</option><option value="week">Semanal</option><option value="month">Mensual</option></select>
+      </div>
+      <div class="ff-">
+        <label>Desde</label>
+        <input type="date" id="cfg-from">
+      </div>
+      <div class="ff-">
+        <label>Hasta</label>
+        <input type="date" id="cfg-to">
+      </div>
+      <div class="ff- cfull">
+        <label>T&#237;tulo</label>
+        <input type="text" id="cfg-ttl" placeholder="T&#237;tulo de la gr&#225;fica">
+      </div>
+      <div class="ff-">
+        <label>L&#237;nea de tendencia</label>
+        <select id="cfg-trend"><option value="no">No</option><option value="yes">S&#237;</option></select>
+      </div>
+      <div class="ff-">
+        <label>Puntos de datos</label>
+        <select id="cfg-dots"><option value="auto">Auto</option><option value="yes">Siempre</option><option value="no">No</option></select>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-chart-cfg')">Cancelar</button>
+      <button class="btn btn-gold" onclick="applyChartCfg()">Generar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: IMPORT -->
+<div class="overlay" id="m-import">
+  <div class="modal" style="width:480px">
+    <div class="modal-h">IMPORTAR PRECIOS</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      Acepta 2 formatos:<br>
+      &#x2022; <strong>Largo:</strong> columnas SKU · Proveedor · Fecha (YYYY-MM-DD) · Precio<br>
+      &#x2022; <strong>Original:</strong> columnas tipo <code style="color:var(--accent)">PROVEEDOR [DD/MM/YY]</code>
+    </p>
+    <div class="imp-drop" id="imp-drop" onclick="document.getElementById('imp-inp').click()">
+      <div style="font-size:26px;margin-bottom:6px">&#x1F4C2;</div>
+      <p>Clic o arrastra tu archivo .xlsx / .xls / .csv</p>
+    </div>
+    <input type="file" id="imp-inp" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImport(event)">
+    <div id="imp-prev" style="font-size:11px;color:var(--muted);min-height:16px;margin-bottom:8px"></div>
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-import')">Cancelar</button>
+      <button class="btn btn-gold" id="imp-ok" onclick="confirmImport()" style="display:none">&#x2714; Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PRICE — STEP 1: Proveedor + Fecha -->
+<div class="overlay" id="m-add-price">
+  <div class="modal" style="width:420px">
+    <div class="modal-h">AGREGAR PRECIOS</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:18px">Paso 1 de 2 — Define el proveedor y la fecha de cotización.</p>
+    <div class="cgrid">
+      <div class="ff- cfull">
+        <label>Proveedor *</label>
+        <input type="text" id="ap-prov" list="ap-prov-dl" placeholder="Ej. CARGILL">
+        <datalist id="ap-prov-dl"></datalist>
+      </div>
+      <div class="ff- cfull">
+        <label>Fecha de cotización *</label>
+        <input type="date" id="ap-date">
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-add-price')">Cancelar</button>
+      <button class="btn btn-gold" onclick="goToStep2()">Siguiente &#x2192;</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PRICE — STEP 2: Multi-product grid -->
+<div class="overlay" id="m-add-rows">
+  <div class="modal" style="width:680px;max-width:98vw">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+      <div>
+        <div class="modal-h" style="margin-bottom:2px">AGREGAR PRODUCTOS</div>
+        <p style="font-size:11px;color:var(--muted)">
+          Paso 2 de 2 — 
+          Proveedor: <strong id="s2-prov" style="color:var(--accent)">—</strong> &nbsp;·&nbsp;
+          Fecha: <strong id="s2-date" style="color:var(--accent)">—</strong>
+          <button class="btn btn-sec" style="padding:2px 8px;font-size:10px;margin-left:8px" onclick="backToStep1()">&#x2190; Cambiar</button>
+        </p>
+      </div>
+    </div>
+
+    <!-- Product rows table -->
+    <div style="max-height:420px;overflow-y:auto;border:1px solid var(--border);margin-bottom:12px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead style="position:sticky;top:0;z-index:2">
+          <tr style="background:var(--surf2)">
+            <th style="padding:8px 10px;text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);width:36px">#</th>
+            <th style="padding:8px 10px;text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border)">Producto / SKU</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);width:90px">Moneda</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);width:90px">Unidad</th>
+            <th style="padding:8px 10px;text-align:right;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);width:120px">Precio</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="ap-rows"></tbody>
+      </table>
+    </div>
+
+    <button class="btn btn-sec" onclick="addProductRow()" style="width:100%;justify-content:center;border-style:dashed;margin-bottom:4px">
+      &#xFF0B; Agregar fila
+    </button>
+
+    <div id="s2-summary" style="font-size:11px;color:var(--muted);margin-bottom:4px"></div>
+
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-add-rows')">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveAllPrices()">&#x2714; Guardar todos los precios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT SKU METADATA -->
+<div class="overlay" id="m-edit-sku">
+  <div class="modal" style="width:420px">
+    <div class="modal-h">EDITAR PRODUCTO</div>
+    <input type="hidden" id="es-orig">
+    <div class="cgrid">
+      <div class="ff- cfull">
+        <label>Nombre del producto *</label>
+        <input type="text" id="es-name" placeholder="Nombre del producto">
+      </div>
+      <div class="ff-">
+        <label>Moneda</label>
+        <select id="es-currency">
+          <option value="USD">USD — Dólar</option>
+          <option value="MXN">MXN — Peso Mexicano</option>
+          <option value="EUR">EUR — Euro</option>
+          <option value="CAD">CAD — Dólar Canadiense</option>
+          <option value="BRL">BRL — Real Brasileño</option>
+        </select>
+      </div>
+      <div class="ff-">
+        <label>Unidad de medida</label>
+        <select id="es-unit">
+          <option value="lb">lb — Libra</option>
+          <option value="kg">kg — Kilogramo</option>
+          <option value="pieza">pieza</option>
+          <option value="caja">caja</option>
+          <option value="tonelada">tonelada</option>
+          <option value="oz">oz — Onza</option>
+          <option value="g">g — Gramo</option>
+        </select>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:6px">
+      ⚠ Si cambias el nombre, todos los registros de precio de este producto se actualizarán automáticamente.
+    </p>
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-edit-sku')">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveEditSku()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PDF IMPORT -->
+<div class="overlay" id="m-import-pdf">
+  <div class="modal" style="width:740px;max-width:98vw">
+    <div class="modal-h">&#x1F4C4; IMPORTAR PDF DE PRECIOS</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:14px">
+      Sube una lista de precios en PDF de <strong>CARGILL</strong> o <strong>GREATER OMAHA</strong>.
+      El sistema detecta el proveedor automáticamente y mapea los productos usando tus traducciones guardadas.
+    </p>
+
+    <!-- Step 1: Drop zone -->
+    <div id="pdf-step1">
+      <div class="pdf-drop" id="pdf-drop" onclick="document.getElementById('pdf-file-inp').click()">
+        <div class="pdf-drop-icon">&#x1F4C4;</div>
+        <p>Haz clic o arrastra el PDF aquí</p>
+        <p style="font-size:10px;margin-top:4px;color:var(--muted)">Compatible: Cargill · Greater Omaha</p>
+      </div>
+      <input type="file" id="pdf-file-inp" accept=".pdf" style="display:none" onchange="handlePdfUpload(event)">
+    </div>
+
+    <!-- Step 2: Preview & mapping -->
+    <div id="pdf-step2" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <span style="font-family:var(--fd);font-size:16px;color:var(--text)" id="pdf-prov-label">—</span>
+          <span style="font-size:11px;color:var(--muted);margin-left:8px" id="pdf-date-label"></span>
+        </div>
+        <div class="pdf-stats" id="pdf-stats"></div>
+      </div>
+
+      <!-- Unmatched products: manual mapping -->
+      <div id="pdf-unmatched-wrap" style="display:none">
+        <p style="font-size:11px;color:#f0a050;font-weight:600;margin-bottom:8px">
+          ⚠ Productos no reconocidos — asigna el SKU manualmente (se guardará para futuras importaciones):
+        </p>
+        <div class="unmatched-section">
+          <div id="pdf-unmatched-rows"></div>
+        </div>
+      </div>
+
+      <!-- Preview table -->
+      <div style="max-height:320px;overflow-y:auto;border:1px solid var(--border);margin-top:10px">
+        <table class="pdf-preview-tbl">
+          <thead><tr>
+            <th style="width:36px;text-align:center">
+              <input type="checkbox" id="pdf-chk-all" checked
+                style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer"
+                onchange="toggleAllPdfRows(this.checked)">
+            </th>
+            <th>Nombre en PDF</th>
+            <th>Calidad</th>
+            <th>SKU en Herramienta</th>
+            <th class="r">Precio</th>
+            <th>Estado</th>
+          </tr></thead>
+          <tbody id="pdf-preview-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="pdf-step1-footer" class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-import-pdf');resetPdfImport()">Cancelar</button>
+    </div>
+    <div id="pdf-step2-footer" class="mfooter" style="display:none">
+      <button class="btn btn-sec" onclick="resetPdfImport()">&#x2190; Otro archivo</button>
+      <span id="pdf-sel-count" style="font-size:11px;color:var(--muted);margin-right:auto"></span>
+      <button class="btn" style="background:rgba(139,92,246,.15);color:#b57bee;border:1px solid rgba(139,92,246,.3)"
+        id="pdf-import-btn" onclick="confirmPdfImport()">&#x2714; Importar seleccionados</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+// DATA
+// ══════════════════════════════════════
+const SK='susazon_prices_v3';
+const SK_UNDO='susazon_prices_undo_v1';
+const SEED=[["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-09", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-12", 9.75], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-12", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-13", 9.75], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-13", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-14", 9.95], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-14", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-15", 9.95], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-15", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-16", 9.95], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-16", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-19", 9.95], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-19", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-20", 9.95], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-21", 9.95], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-22", 9.95], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-22", 10.25], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-23", 9.75], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-26", 9.75], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-27", 9.75], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-27", 10.35], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-28", 9.9], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-28", 10.35], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-29", 9.9], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-01-30", 9.9], ["ARRACHERA OUTSIDE CAB", "GREATER OMAHA", "2026-01-30", 10.4], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-03", 10.15], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-04", 10.15], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-05", 10.15], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-06", 10.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-09", 10.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-10", 10.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-11", 10.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-12", 10.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-13", 10.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-16", 10.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-17", 10.65], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-18", 10.65], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-19", 10.75], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-20", 10.75], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-23", 10.75], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-24", 10.75], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-25", 10.85], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-26", 10.85], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-02-27", 10.85], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-03-03", 11.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-03-05", 11.5], ["ARRACHERA OUTSIDE CAB", "CARGILL", "2026-03-06", 11.5], ["BRISKET CAB", "GREATER OMAHA", "2026-01-09", 4.95], ["BRISKET CAB", "GREATER OMAHA", "2026-01-12", 4.95], ["BRISKET CAB", "GREATER OMAHA", "2026-01-13", 4.9], ["BRISKET CAB", "GREATER OMAHA", "2026-01-14", 4.9], ["BRISKET CAB", "GREATER OMAHA", "2026-01-15", 4.9], ["BRISKET CAB", "GREATER OMAHA", "2026-01-16", 4.85], ["BRISKET CAB", "GREATER OMAHA", "2026-01-19", 4.85], ["BRISKET CAB", "GREATER OMAHA", "2026-01-22", 4.85], ["BRISKET CAB", "GREATER OMAHA", "2026-01-27", 4.85], ["BRISKET CAB", "GREATER OMAHA", "2026-01-28", 4.85], ["BRISKET CAB", "GREATER OMAHA", "2026-01-30", 4.85], ["CARNE MOLIDA 80/20 CAB", "GREATER OMAHA", "2026-01-09", 3.75], ["CARNE MOLIDA 80/20 CAB", "GREATER OMAHA", "2026-01-12", 3.85], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-09", 7.2], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-12", 7.2], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-13", 7.2], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-14", 7.2], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-15", 7.2], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-16", 7.2], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-19", 7.2], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-22", 7.1], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-27", 6.95], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-28", 6.75], ["CHUCK ROLL CAB IMPORTADO", "GREATER OMAHA", "2026-01-30", 6.75], ["CHUCK ROLL CAB IMPORTADO", "CARGILL", "2026-03-03", 5.35], ["CLOD CAB", "GREATER OMAHA", "2026-01-09", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-12", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-13", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-14", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-15", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-16", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-19", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-22", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-27", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-28", 4.25], ["CLOD CAB", "GREATER OMAHA", "2026-01-30", 4.25], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-09", 17.75], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-12", 15.65], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-12", 17.75], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-13", 15.65], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-13", 17.75], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-14", 15.8], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-14", 17.75], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-15", 15.8], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-15", 17.75], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-16", 15.65], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-16", 17.75], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-19", 15.65], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-19", 17.0], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-20", 15.65], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-21", 15.65], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-22", 15.65], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-22", 16.75], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-23", 15.65], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-26", 15.65], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-27", 15.65], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-27", 16.5], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-28", 15.65], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-28", 16.5], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-29", 15.5], ["FILETE LIMPIO CAB", "CARGILL", "2026-01-30", 15.4], ["FILETE LIMPIO CAB", "GREATER OMAHA", "2026-01-30", 16.5], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-03", 15.5], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-04", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-05", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-06", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-09", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-10", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-11", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-12", 15.25], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-13", 15.25], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-16", 15.25], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-17", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-18", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-19", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-20", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-23", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-24", 15.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-25", 15.65], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-26", 15.9], ["FILETE LIMPIO CAB", "CARGILL", "2026-02-27", 15.9], ["FILETE LIMPIO CAB", "CARGILL", "2026-03-03", 16.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-03-05", 16.4], ["FILETE LIMPIO CAB", "CARGILL", "2026-03-06", 16.4], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-09", 8.95], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-12", 9.2], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-12", 8.95], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-13", 9.2], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-13", 8.95], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-14", 9.45], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-14", 9.05], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-15", 9.45], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-15", 9.05], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-16", 9.45], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-16", 9.05], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-19", 9.45], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-19", 9.15], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-20", 9.45], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-21", 9.45], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-22", 9.45], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-22", 9.35], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-23", 9.45], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-26", 9.45], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-27", 9.45], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-27", 9.5], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-28", 9.55], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-28", 9.5], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-29", 9.65], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-01-30", 9.75], ["FLAP MEAT (VACIO) CAB", "GREATER OMAHA", "2026-01-30", 9.5], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-03", 9.75], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-04", 9.65], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-05", 9.65], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-06", 9.8], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-09", 9.8], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-10", 9.8], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-11", 9.85], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-12", 9.85], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-13", 9.85], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-16", 9.85], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-17", 9.85], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-18", 9.85], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-19", 9.85], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-20", 10.05], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-23", 10.2], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-24", 10.35], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-25", 10.5], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-26", 10.6], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-02-27", 10.6], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-03-03", 10.7], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-03-05", 10.7], ["FLAP MEAT (VACIO) CAB", "CARGILL", "2026-03-06", 10.7], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-09", 6.8], ["INSIDE SKIRT", "CARGILL", "2026-01-12", 7.1], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-12", 6.8], ["INSIDE SKIRT", "CARGILL", "2026-01-13", 7.1], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-13", 6.9], ["INSIDE SKIRT", "CARGILL", "2026-01-14", 7.25], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-14", 6.9], ["INSIDE SKIRT", "CARGILL", "2026-01-15", 7.25], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-15", 6.9], ["INSIDE SKIRT", "CARGILL", "2026-01-16", 7.35], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-16", 6.9], ["INSIDE SKIRT", "CARGILL", "2026-01-19", 7.35], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-19", 6.9], ["INSIDE SKIRT", "CARGILL", "2026-01-20", 7.35], ["INSIDE SKIRT", "CARGILL", "2026-01-21", 7.35], ["INSIDE SKIRT", "CARGILL", "2026-01-22", 7.35], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-22", 6.9], ["INSIDE SKIRT", "CARGILL", "2026-01-23", 7.35], ["INSIDE SKIRT", "CARGILL", "2026-01-26", 7.35], ["INSIDE SKIRT", "CARGILL", "2026-01-27", 7.35], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-27", 6.95], ["INSIDE SKIRT", "CARGILL", "2026-01-28", 7.35], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-28", 6.95], ["INSIDE SKIRT", "CARGILL", "2026-01-29", 7.45], ["INSIDE SKIRT", "CARGILL", "2026-01-30", 7.55], ["INSIDE SKIRT", "GREATER OMAHA", "2026-01-30", 6.95], ["INSIDE SKIRT", "CARGILL", "2026-02-03", 7.55], ["INSIDE SKIRT", "CARGILL", "2026-02-04", 7.55], ["INSIDE SKIRT", "CARGILL", "2026-02-05", 7.55], ["INSIDE SKIRT", "CARGILL", "2026-02-06", 6.95], ["INSIDE SKIRT", "CARGILL", "2026-02-09", 8.05], ["INSIDE SKIRT", "CARGILL", "2026-02-10", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-11", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-12", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-13", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-16", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-17", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-18", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-19", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-20", 8.3], ["INSIDE SKIRT", "CARGILL", "2026-02-23", 8.6], ["INSIDE SKIRT", "CARGILL", "2026-02-24", 8.6], ["INSIDE SKIRT", "CARGILL", "2026-02-25", 8.75], ["INSIDE SKIRT", "CARGILL", "2026-02-26", 8.85], ["INSIDE SKIRT", "CARGILL", "2026-02-27", 8.85], ["INSIDE SKIRT", "CARGILL", "2026-03-03", 9.1], ["INSIDE SKIRT", "CARGILL", "2026-03-05", 9.1], ["INSIDE SKIRT", "CARGILL", "2026-03-06", 9.1], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-13", 3.9], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-14", 3.9], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-15", 3.9], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-16", 3.9], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-19", 3.9], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-22", 3.95], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-27", 4.1], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-28", 4.1], ["MOLIDA IMPORTADA CAB", "GREATER OMAHA", "2026-01-30", 4.1], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-09", 1.55], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-12", 1.55], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-13", 3.2], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-14", 3.2], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-15", 3.35], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-16", 3.35], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-19", 3.35], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-22", 3.35], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-27", 3.35], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-28", 3.35], ["MOLLEJA DE RES", "GREATER OMAHA", "2026-01-30", 3.35], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-09", 10.3], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-12", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-12", 10.3], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-13", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-13", 10.3], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-14", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-14", 10.3], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-15", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-15", 10.3], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-16", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-16", 10.3], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-19", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-19", 10.3], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-20", 10.85], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-21", 10.6], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-22", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-22", 10.4], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-23", 10.85], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-26", 10.85], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-27", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-27", 10.5], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-28", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-28", 10.5], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-29", 10.85], ["NEW YORK TROZO CAB", "CARGILL", "2026-01-30", 10.85], ["NEW YORK TROZO CAB", "GREATER OMAHA", "2026-01-30", 10.5], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-03", 11.0], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-04", 11.0], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-05", 10.85], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-06", 11.0], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-09", 11.1], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-10", 11.1], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-11", 11.1], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-12", 11.1], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-13", 11.0], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-16", 11.0], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-17", 11.0], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-18", 11.0], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-19", 11.1], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-20", 11.2], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-23", 11.2], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-24", 11.2], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-25", 11.35], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-26", 11.35], ["NEW YORK TROZO CAB", "CARGILL", "2026-02-27", 11.35], ["NEW YORK TROZO CAB", "CARGILL", "2026-03-03", 11.5], ["NEW YORK TROZO CAB", "CARGILL", "2026-03-05", 11.85], ["NEW YORK TROZO CAB", "CARGILL", "2026-03-06", 11.85], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-09", 11.5], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-12", 11.5], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-13", 11.5], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-14", 11.5], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-15", 11.25], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-16", 11.25], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-19", 11.25], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-22", 11.0], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-27", 11.0], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-28", 11.0], ["NEW YORK USDA CAB PRIME", "GREATER OMAHA", "2026-01-30", 11.0], ["PICAÑA CAB", "CARGILL", "2026-01-12", 7.7], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-12", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-13", 7.7], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-13", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-14", 7.7], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-14", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-15", 7.8], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-15", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-16", 7.8], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-16", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-19", 7.8], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-19", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-20", 7.8], ["PICAÑA CAB", "CARGILL", "2026-01-21", 7.6], ["PICAÑA CAB", "CARGILL", "2026-01-22", 7.6], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-22", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-23", 7.6], ["PICAÑA CAB", "CARGILL", "2026-01-26", 7.6], ["PICAÑA CAB", "CARGILL", "2026-01-27", 7.6], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-27", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-28", 7.65], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-28", 8.35], ["PICAÑA CAB", "CARGILL", "2026-01-29", 7.7], ["PICAÑA CAB", "CARGILL", "2026-01-30", 7.7], ["PICAÑA CAB", "GREATER OMAHA", "2026-01-30", 8.0], ["PICAÑA CAB", "CARGILL", "2026-02-03", 7.7], ["PICAÑA CAB", "CARGILL", "2026-02-04", 7.7], ["PICAÑA CAB", "CARGILL", "2026-02-05", 7.7], ["PICAÑA CAB", "CARGILL", "2026-02-06", 7.75], ["PICAÑA CAB", "CARGILL", "2026-02-09", 7.85], ["PICAÑA CAB", "CARGILL", "2026-02-10", 7.85], ["PICAÑA CAB", "CARGILL", "2026-02-11", 7.85], ["PICAÑA CAB", "CARGILL", "2026-02-12", 7.85], ["PICAÑA CAB", "CARGILL", "2026-02-13", 7.85], ["PICAÑA CAB", "CARGILL", "2026-02-16", 7.85], ["PICAÑA CAB", "CARGILL", "2026-02-17", 7.75], ["PICAÑA CAB", "CARGILL", "2026-02-18", 7.75], ["PICAÑA CAB", "CARGILL", "2026-02-19", 7.75], ["PICAÑA CAB", "CARGILL", "2026-02-20", 7.85], ["PICAÑA CAB", "CARGILL", "2026-02-23", 7.95], ["PICAÑA CAB", "CARGILL", "2026-02-24", 7.95], ["PICAÑA CAB", "CARGILL", "2026-02-25", 7.95], ["PICAÑA CAB", "CARGILL", "2026-02-26", 7.95], ["PICAÑA CAB", "CARGILL", "2026-02-27", 7.95], ["PICAÑA CAB", "CARGILL", "2026-03-03", 8.1], ["PICAÑA CAB", "CARGILL", "2026-03-05", 8.3], ["PICAÑA CAB", "CARGILL", "2026-03-06", 8.3], ["PICAÑA CHOICE", "CARGILL", "2026-01-12", 7.35], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-12", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-13", 7.35], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-13", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-14", 7.35], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-14", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-15", 7.45], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-15", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-16", 5.45], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-16", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-19", 7.45], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-19", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-20", 7.45], ["PICAÑA CHOICE", "CARGILL", "2026-01-21", 7.25], ["PICAÑA CHOICE", "CARGILL", "2026-01-22", 7.25], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-22", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-23", 7.25], ["PICAÑA CHOICE", "CARGILL", "2026-01-26", 7.25], ["PICAÑA CHOICE", "CARGILL", "2026-01-27", 7.25], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-27", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-28", 7.3], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-28", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-01-29", 7.35], ["PICAÑA CHOICE", "CARGILL", "2026-01-30", 7.35], ["PICAÑA CHOICE", "GREATER OMAHA", "2026-01-30", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-02-03", 7.35], ["PICAÑA CHOICE", "CARGILL", "2026-02-04", 7.35], ["PICAÑA CHOICE", "CARGILL", "2026-02-05", 7.35], ["PICAÑA CHOICE", "CARGILL", "2026-02-06", 7.4], ["PICAÑA CHOICE", "CARGILL", "2026-02-09", 7.5], ["PICAÑA CHOICE", "CARGILL", "2026-02-10", 7.5], ["PICAÑA CHOICE", "CARGILL", "2026-02-11", 7.5], ["PICAÑA CHOICE", "CARGILL", "2026-02-12", 7.5], ["PICAÑA CHOICE", "CARGILL", "2026-02-13", 7.5], ["PICAÑA CHOICE", "CARGILL", "2026-02-16", 7.5], ["PICAÑA CHOICE", "CARGILL", "2026-02-17", 7.4], ["PICAÑA CHOICE", "CARGILL", "2026-02-18", 7.4], ["PICAÑA CHOICE", "CARGILL", "2026-02-19", 7.4], ["PICAÑA CHOICE", "CARGILL", "2026-02-20", 7.5], ["PICAÑA CHOICE", "CARGILL", "2026-02-23", 7.6], ["PICAÑA CHOICE", "CARGILL", "2026-02-24", 7.6], ["PICAÑA CHOICE", "CARGILL", "2026-02-25", 7.6], ["PICAÑA CHOICE", "CARGILL", "2026-02-26", 7.6], ["PICAÑA CHOICE", "CARGILL", "2026-02-27", 7.6], ["PICAÑA CHOICE", "CARGILL", "2026-03-03", 7.75], ["PICAÑA CHOICE", "CARGILL", "2026-03-05", 7.95], ["PICAÑA CHOICE", "CARGILL", "2026-03-06", 7.95], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-09", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-12", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-13", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-14", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-15", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-16", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-22", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "CARGILL", "2026-01-27", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "GREATER OMAHA", "2026-01-28", 11.0], ["PRIME RIB CAB TROZO PRIMARIO", "CARGILL", "2026-01-30", 11.0], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-09", 4.4], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-12", 4.4], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-13", 4.4], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-14", 4.4], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-15", 4.4], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-16", 4.4], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-19", 4.4], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-22", 4.45], ["PULPA NEGRA INSIDE CAB", "CARGILL", "2026-01-27", 4.55], ["PULPA NEGRA INSIDE CAB", "GREATER OMAHA", "2026-01-28", 4.55], ["PULPA NEGRA INSIDE CAB", "CARGILL", "2026-01-30", 4.55], ["PULPA NEGRA INSIDE CAB", "Tyson", "2026-03-03", 5.0], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-09", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-12", 12.35], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-12", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-13", 12.35], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-13", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-14", 12.35], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-14", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-15", 12.35], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-15", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-16", 12.1], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-16", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-19", 12.1], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-19", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-20", 11.2], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-21", 11.35], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-22", 11.35], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-22", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-23", 11.35], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-26", 11.35], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-27", 11.35], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-27", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-28", 11.45], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-28", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-29", 11.45], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-01-30", 11.45], ["RIB EYE LIP ON TROZO CAB", "GREATER OMAHA", "2026-01-30", 12.25], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-03", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-04", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-05", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-06", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-09", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-10", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-11", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-12", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-13", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-16", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-17", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-18", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-19", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-20", 11.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-23", 11.85], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-24", 11.85], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-25", 12.2], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-26", 12.2], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-02-27", 12.2], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-03-03", 12.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-03-05", 12.6], ["RIB EYE LIP ON TROZO CAB", "CARGILL", "2026-03-06", 12.6], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-09", 14.5], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-12", 14.5], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-13", 14.0], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-14", 14.0], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-15", 13.75], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-16", 13.75], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-19", 13.75], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-22", 13.75], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-27", 14.0], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-28", 14.0], ["RIB EYE LIP ON TROZO CALIDAD USDA PRIME", "GREATER OMAHA", "2026-01-30", 14.0], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-09", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-12", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-13", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-14", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-15", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-16", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-19", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-22", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-27", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-28", 9.75], ["SHORT LOIN CAB", "GREATER OMAHA", "2026-01-30", 9.75], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-09", 5.45], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-12", 5.45], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-13", 5.45], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-14", 5.65], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-15", 5.65], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-16", 5.65], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-19", 5.75], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-22", 5.75], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-27", 5.8], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-28", 5.8], ["SHORT RIB 4 HUESOS CAB", "GREATER OMAHA", "2026-01-30", 5.9], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-09", 11.5], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-12", 11.5], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-13", 11.25], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-14", 11.0], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-15", 11.0], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-16", 10.65], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-19", 10.4], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-22", 9.9], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-27", 9.5], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-28", 9.15], ["SHORT RIB SIN HUESO CAB", "GREATER OMAHA", "2026-01-30", 8.9], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-09", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-12", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-13", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-14", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-15", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-16", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-19", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-22", 7.75], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-27", 7.5], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-28", 7.5], ["SHORT RIB TROZO CAB", "GREATER OMAHA", "2026-01-30", 7.35], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-09", 7.15], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-12", 7.15], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-13", 7.25], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-14", 7.3], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-15", 7.5], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-16", 7.5], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-19", 7.6], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-22", 7.7], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-27", 7.7], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-28", 7.7], ["TOP SIRLOIN CENTER CUT CHOICE", "GREATER OMAHA", "2026-01-30", 7.7], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-09", 5.3], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-12", 5.56], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-12", 5.3], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-13", 5.56], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-13", 5.4], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-14", 5.66], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-14", 5.55], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-15", 5.66], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-15", 5.55], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-16", 5.66], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-16", 5.55], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-19", 5.66], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-19", 5.6], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-20", 5.66], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-21", 5.56], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-22", 5.56], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-22", 5.65], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-23", 5.56], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-26", 5.56], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-27", 5.56], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-27", 5.75], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-28", 5.66], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-28", 5.75], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-29", 5.66], ["TOP SIRLOIN SELECT", "CARGILL", "2026-01-30", 7.75], ["TOP SIRLOIN SELECT", "GREATER OMAHA", "2026-01-30", 5.75], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-03", 5.75], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-04", 5.75], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-05", 5.75], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-06", 5.8], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-09", 5.8], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-10", 5.8], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-11", 5.8], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-12", 5.8], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-13", 5.8], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-16", 5.71], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-17", 5.71], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-18", 5.71], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-19", 5.8], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-20", 5.9], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-23", 6.04], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-24", 6.04], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-25", 6.13], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-26", 6.28], ["TOP SIRLOIN SELECT", "CARGILL", "2026-02-27", 6.28], ["TOP SIRLOIN SELECT", "CARGILL", "2026-03-03", 6.42], ["TOP SIRLOIN SELECT", "CARGILL", "2026-03-05", 6.66], ["TOP SIRLOIN SELECT", "CARGILL", "2026-03-06", 6.66], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-09", 5.85], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-12", 5.85], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-13", 5.75], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-14", 5.85], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-15", 5.85], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-16", 5.85], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-19", 5.85], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-27", 5.95], ["TOP SIRLOIN TROZO CAB", "GREATER OMAHA", "2026-01-28", 5.95], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-09", 5.35], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-12", 5.71], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-12", 5.35], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-13", 5.71], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-13", 5.45], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-14", 5.8], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-14", 5.6], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-15", 5.8], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-15", 5.65], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-16", 5.8], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-16", 5.65], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-19", 5.8], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-19", 5.65], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-20", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-21", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-22", 5.8], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-22", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-23", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-26", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-27", 5.8], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-27", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-28", 5.94], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-28", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-29", 5.94], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-01-30", 6.04], ["TOP SIRLOIN TROZO CHOICE", "GREATER OMAHA", "2026-01-30", 5.8], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-03", 6.04], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-04", 6.04], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-05", 6.04], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-06", 6.09], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-09", 6.09], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-10", 6.09], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-11", 6.09], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-12", 6.09], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-13", 6.04], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-16", 5.94], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-17", 5.94], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-18", 6.04], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-19", 6.04], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-20", 6.13], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-23", 6.28], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-24", 6.28], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-25", 6.42], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-26", 6.51], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-02-27", 6.51], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-03-03", 6.75], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-03-05", 6.99], ["TOP SIRLOIN TROZO CHOICE", "CARGILL", "2026-03-06", 6.99], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-09", 5.15], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-12", 5.37], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-12", 5.15], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-13", 5.37], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-13", 5.25], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-14", 5.47], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-14", 5.4], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-15", 5.47], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-15", 5.4], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-16", 5.47], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-16", 5.4], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-19", 5.47], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-19", 5.45], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-20", 5.47], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-21", 5.37], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-22", 5.37], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-22", 7.6], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-23", 5.37], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-26", 5.37], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-27", 5.37], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-27", 5.6], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-28", 5.47], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-28", 5.6], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-29", 5.47], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-01-30", 5.56], ["TOP SIRLOIN TROZO NR", "GREATER OMAHA", "2026-01-30", 5.6], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-03", 5.56], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-04", 5.56], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-05", 5.56], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-06", 5.61], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-09", 5.61], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-10", 5.61], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-11", 5.61], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-12", 5.61], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-13", 5.61], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-16", 5.52], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-17", 5.52], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-18", 5.52], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-19", 5.61], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-20", 5.71], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-23", 5.85], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-24", 5.85], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-25", 5.94], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-26", 6.09], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-02-27", 6.09], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-03-03", 6.23], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-03-05", 6.47], ["TOP SIRLOIN TROZO NR", "CARGILL", "2026-03-06", 6.47], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-09", 5.35], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-12", 6.05], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-12", 5.35], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-13", 6.05], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-13", 5.35], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-14", 6.2], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-14", 5.35], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-15", 6.2], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-15", 5.35], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-16", 6.2], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-16", 5.4], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-19", 6.2], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-19", 5.4], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-20", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-21", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-22", 6.2], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-22", 5.4], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-23", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-26", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-27", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-28", 6.35], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-29", 6.35], ["TRI-TIP TROZO CAB", "CARGILL", "2026-01-30", 6.45], ["TRI-TIP TROZO CAB", "GREATER OMAHA", "2026-01-30", 5.95], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-03", 6.45], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-04", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-05", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-06", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-09", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-10", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-11", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-12", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-13", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-16", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-17", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-18", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-19", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-20", 6.2], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-23", 6.3], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-24", 6.4], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-25", 6.45], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-26", 6.55], ["TRI-TIP TROZO CAB", "CARGILL", "2026-02-27", 6.55], ["TRI-TIP TROZO CAB", "CARGILL", "2026-03-03", 6.7], ["TRI-TIP TROZO CAB", "CARGILL", "2026-03-05", 6.6], ["TRI-TIP TROZO CAB", "CARGILL", "2026-03-06", 6.6], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-09", 8.3], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-12", 8.6], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-12", 8.3], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-13", 8.6], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-13", 8.3], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-14", 8.85], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-14", 8.4], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-15", 8.85], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-15", 8.4], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-16", 8.85], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-16", 8.4], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-19", 8.85], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-19", 8.5], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-20", 8.85], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-21", 8.85], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-22", 8.85], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-22", 8.7], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-23", 8.85], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-26", 8.85], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-27", 8.85], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-27", 8.85], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-28", 8.95], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-28", 9.0], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-29", 9.05], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-01-30", 9.15], ["VACIO FLAP MEAT CHOICE", "GREATER OMAHA", "2026-01-30", 9.0], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-03", 9.15], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-04", 9.05], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-05", 9.05], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-06", 9.2], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-09", 9.2], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-10", 9.2], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-11", 9.25], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-12", 9.25], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-13", 9.25], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-16", 9.25], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-17", 9.25], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-18", 9.25], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-19", 9.25], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-20", 9.45], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-23", 9.6], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-24", 9.75], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-25", 9.9], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-26", 10.0], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-02-27", 10.0], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-03-03", 10.1], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-03-05", 10.1], ["VACIO FLAP MEAT CHOICE", "CARGILL", "2026-03-06", 10.1]];
+
+function loadDB(){ try{const r=localStorage.getItem(SK);if(r)return JSON.parse(r);}catch(e){} return null; }
+function saveDB(prev){
+  // Save undo snapshot BEFORE overwriting (only when prev is passed)
+  if(prev!==undefined) localStorage.setItem(SK_UNDO, JSON.stringify({db:prev, ts:Date.now()}));
+  localStorage.setItem(SK,JSON.stringify(db));
+}
+function canUndo(){ return !!localStorage.getItem(SK_UNDO); }
+function undoLastImport(){
+  const snap = localStorage.getItem(SK_UNDO);
+  if(!snap){ toast('No hay importación para revertir.',true); return; }
+  if(!confirm('¿Revertir la última importación? Esta acción no se puede deshacer.')) return;
+  const {db:prev, ts} = JSON.parse(snap);
+  db = prev;
+  localStorage.setItem(SK,JSON.stringify(db));
+  localStorage.removeItem(SK_UNDO);
+  buildSidebar(); refresh();
+  const age = Math.round((Date.now()-ts)/1000);
+  const label = age<60?`hace ${age}s`: age<3600?`hace ${Math.round(age/60)}min`:`hace ${Math.round(age/3600)}h`;
+  toast(`Importación revertida (${label}).`);
+  updateUndoBtn();
+}
+function updateUndoBtn(){
+  const btn=document.getElementById('btn-undo-import');
+  if(!btn) return;
+  const snap=localStorage.getItem(SK_UNDO);
+  if(snap){
+    const {ts}=JSON.parse(snap);
+    const age=Math.round((Date.now()-ts)/1000);
+    const label=age<60?`${age}s`:age<3600?`${Math.round(age/60)}min`:`${Math.round(age/3600)}h`;
+    btn.style.display='inline-flex';
+    btn.title=`Revertir importación de hace ${label}`;
+  } else {
+    btn.style.display='none';
+  }
+}
+let db = loadDB() || SEED.map(r=>[...r]);
+if(!localStorage.getItem(SK)) saveDB();
+
+// ══════════════════════════════════════
+// PDF MAPPING STORE
+// ══════════════════════════════════════
+const SK_PDF_MAP = 'susazon_pdf_map_v1';
+// Base mapping from TRADUCCION.xlsx (lowercase keys and values)
+const BASE_PDF_MAP = {"GREATER OMAHA": {"lip on ribeye heavy": ["rib eye lip on trozo cab", "rib eye lip on trozo calidad usda prime"], "export rib heavy": ["prime rib cab trozo primario"], "shoulder clod xt": ["clod cab"], "chuck rill (cr)": ["chuck roll cab importado"], "inside rnd xt": ["pulpa negra inside cab"], "frz sweetbreads": ["mojella de res"], "73 fine grind": ["molida importada cab"], "81 fine grind": ["molida importada cab"], "80 fine grind": ["molida importada cab"], "short loin 0x1": ["short loin cab"], "0x1 strip": ["new york trozo cab", "new york usda cab prime"], "top butt xt": ["top sirloin trozo cab", "top sirloin trozo choice", "top sirloin nr", "top sirloin select"], "top butt center (xxt)": ["top sirloin center cut choice"], "fat on culotte": ["picaña choice", "picaña cab"], "bsmo tender": ["filete limpio cab"], "b/i chk short ribs": ["short rib 4 huesos cab"], "b/i rib short ribs": ["short rib trozo cab"], "chuck flap meat": ["short rib sin hueso cab"], "flap meat": ["flap meat (vacio) cab", "vacio flap meat choice"], "fat on tri tip": ["tri-tip trozo cab"], "inside skirt": ["inside skirt nr", "inside skirt select", "inside skirt choice", "inside skirt cab", "inside skirt prime"], "outside skirt": ["arrachera outside cab"], "brisket": ["brisket cab", "brisket choice"]}, "CARGILL": {"inside skirt": ["inside skirt choice", "inside skirt select"], "culotte 3/4\" choice": ["picaña choice"], "top sirloin ch": ["top sirloin trozo choice"], "flap meat ch": ["vacio flap meat choice"], "top sirloin nr": ["top sirloin trozo nr"], "bnls striploin": ["new york trozo cab"], "lip on 2\" heavy": ["rib eye lip on trozo cab"], "tri tip": ["tri-tip trozo cab"], "outside skirt": ["arrachera outside cab"], "outside skirt choice": ["arrachera outside choice"], "culotte": ["picaña cab"], "tenderloin": ["filete limpio cab"], "flap meat": ["flap meat (vacio) cab"], "bnls striploin choice 0x1": ["new york trozo choice"], "tri tip choice": ["tri-tip trozo choice"], "tenderloin ch": ["filete limpio choice"]}};
+
+function loadPdfMap(){
+  try{const r=localStorage.getItem(SK_PDF_MAP);if(r)return JSON.parse(r);}catch(e){}
+  return JSON.parse(JSON.stringify(BASE_PDF_MAP)); // deep clone
+}
+function savePdfMap(){ localStorage.setItem(SK_PDF_MAP, JSON.stringify(pdfMap)); }
+let pdfMap = loadPdfMap();
+
+// Add a new mapping entry (learned from user)
+function learnPdfMapping(prov, pdfName, skuName){
+  const k = pdfName.toLowerCase().trim();
+  const v = skuName.toLowerCase().trim();
+  if(!pdfMap[prov]) pdfMap[prov] = {};
+  if(!pdfMap[prov][k]) pdfMap[prov][k] = [];
+  if(!pdfMap[prov][k].includes(v)) pdfMap[prov][k].push(v);
+  savePdfMap();
+}
+
+// SKU METADATA store: { skuName: {name, currency, unit} }
+const SK_META = 'susazon_prices_meta_v1';
+const CURRENCIES = ['USD','MXN','EUR','CAD','BRL'];
+const UNITS = ['lb','kg','pieza','caja','tonelada','oz','g'];
+function loadMeta(){ try{const r=localStorage.getItem(SK_META);if(r)return JSON.parse(r);}catch(e){} return {}; }
+function saveMeta(){ localStorage.setItem(SK_META,JSON.stringify(skuMeta)); }
+let skuMeta = loadMeta();
+function getMeta(s){ if(!skuMeta[s]) skuMeta[s]={name:s,currency:'USD',unit:'lb'}; return skuMeta[s]; }
+function setMeta(oldN,newN,cur,unit){
+  const m={name:newN,currency:cur,unit};
+  if(oldN!==newN){ db.forEach(r=>{if(r[0]===oldN)r[0]=newN;}); delete skuMeta[oldN]; if(selSku===oldN)selSku=newN; }
+  skuMeta[newN]=m; saveDB(); saveMeta();
+}
+function deleteSkuAll(s){
+  db=db.filter(r=>r[0]!==s); delete skuMeta[s];
+  if(selSku===s)selSku=null;
+  saveDB(); saveMeta();
+}
+
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+const PROV_CLR={'CARGILL':'#4a9eff','GREATER OMAHA':'#3ec87a','Tyson':'#f0a030'};
+const PALETTE=['#4a9eff','#3ec87a','#f0a030','#e05555','#c39bd3','#f7dc6f','#85c1e9','#f1948a','#bb8fce','#82e0aa'];
+function pclr(p){ return PROV_CLR[p]||(PROV_CLR[p]=PALETTE[Object.keys(PROV_CLR).length%PALETTE.length]); }
+function dt(d){ return new Date(d+'T00:00:00'); }
+function fmtD(d){ return dt(d).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'2-digit'}); }
+function isoW(d){ const t=dt(d),dy=t.getDay()||7;t.setDate(t.getDate()+4-dy);const y=t.getFullYear();return y+'-W'+String(Math.ceil(((t-new Date(y,0,1))/864e5+1)/7)).padStart(2,'0'); }
+function n2(v){ return typeof v==='number'?v.toFixed(2):'—'; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+let _tt;
+function toast(m,e=false){ const t=document.getElementById('toast');t.textContent=m;t.className='show'+(e?' err':'');clearTimeout(_tt);_tt=setTimeout(()=>t.className='',3000); }
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let selSku=null, selProvs=new Set(), curPeriod='week', curView='chart';
+let customFrom=null, customTo=null;
+let sortCol='date', sortDir=1;
+let mainChart=null, chartCfg=null, pendingImp=null;
+
+// ══════════════════════════════════════
+// DERIVED
+// ══════════════════════════════════════
+function allSkus(){ return [...new Set(db.map(r=>r[0]))].sort(); }
+function allProvs(){ return [...new Set(db.map(r=>r[1]))].sort(); }
+function allDates(){ return [...new Set(db.map(r=>r[2]))].sort(); }
+
+function filtered(oSku, oProv){
+  const sku=oSku!==undefined?oSku:selSku;
+  const pr=oProv!==undefined?oProv:selProvs;
+  let rows=db.filter(r=>(!sku||r[0]===sku)&&(!pr.size||pr.has(r[1])));
+  const now=new Date();now.setHours(0,0,0,0);
+  if(curPeriod==='week'){const f=new Date(now);f.setDate(f.getDate()-7);rows=rows.filter(r=>dt(r[2])>=f);}
+  else if(curPeriod==='month'){const f=new Date(now);f.setMonth(f.getMonth()-1);rows=rows.filter(r=>dt(r[2])>=f);}
+  else if(curPeriod==='year'){const f=new Date(now);f.setFullYear(f.getFullYear()-1);rows=rows.filter(r=>dt(r[2])>=f);}
+  else if(curPeriod==='custom'&&customFrom&&customTo){rows=rows.filter(r=>r[2]>=customFrom&&r[2]<=customTo);}
+  return rows;
+}
+
+// ══════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════
+function buildSidebar(){
+  const pl=document.getElementById('prov-list');pl.innerHTML='';
+  allProvs().forEach(p=>{
+    const cnt=db.filter(r=>r[1]===p).length;
+    const d=document.createElement('div');d.className='prov-row'+(selProvs.size===0||selProvs.has(p)?' on':'');
+    const chkd=selProvs.size===0||selProvs.has(p)?'checked':'';
+    d.innerHTML=`<input type="checkbox" class="prov-chk" ${chkd} onchange="toggleProv('${p}',this)"><div class="prov-dot" style="background:${pclr(p)}"></div><span class="prov-lbl">${esc(p)}</span>`;
+    pl.appendChild(d);
+  });
+  filterSkus();
+}
+function filterSkus(){
+  const q=(document.getElementById('sku-search').value||'').toLowerCase();
+  const sl=document.getElementById('sku-list');sl.innerHTML='';
+  allSkus().filter(s=>!q||s.toLowerCase().includes(q)).forEach(s=>{
+    const m=getMeta(s);
+    const d=document.createElement('div');
+    d.className='sku-item'+(s===selSku?' active':'');
+    d.innerHTML=`
+      <span class="sku-name" onclick="selectSku('${s.replace(/'/g,"\\'")}')">
+        ${esc(s)}
+        <span class="sku-badge">${esc(m.currency)} / ${esc(m.unit)}</span>
+      </span>
+      <span class="sku-acts">
+        <button class="sku-act-btn sku-edit" title="Editar" onclick="event.stopPropagation();openEditSku('${s.replace(/'/g,"\\'")}')">✏</button>
+        <button class="sku-act-btn sku-del" title="Eliminar SKU y todos sus precios" onclick="event.stopPropagation();confirmDeleteSku('${s.replace(/'/g,"\\'")}')">✕</button>
+      </span>`;
+    sl.appendChild(d);
+  });
+}
+function toggleProv(p,cb){ if(cb.checked)selProvs.add(p);else selProvs.delete(p);refresh(); }
+function selectSku(s){
+  selSku = s;
+  // Highlight active SKU in sidebar
+  document.querySelectorAll('.sku-item').forEach(el => el.classList.toggle('active', el.textContent === s));
+  // Reset any custom chart config so the new SKU renders cleanly
+  chartCfg = null;
+  // Always switch to chart view when picking a product
+  if(curView !== 'chart'){
+    curView = 'chart';
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.vtab').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-chart').classList.add('active');
+    document.querySelector('.vtab').classList.add('active');
+  }
+  renderChart();
+}
+
+// ══════════════════════════════════════
+// VIEW
+// ══════════════════════════════════════
+function switchView(v,btn){
+  curView=v;
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.vtab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+v).classList.add('active');btn.classList.add('active');
+  v==='chart'?renderChart():renderTable();
+}
+function setPeriod(p,btn){
+  curPeriod=p;
+  document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('custom-range').style.display=p==='custom'?'flex':'none';
+  refresh();
+}
+function applyCustomRange(){ customFrom=document.getElementById('range-from').value;customTo=document.getElementById('range-to').value;refresh(); }
+function refresh(){ curView==='chart'?renderChart():renderTable(); }
+
+// ══════════════════════════════════════
+// CHART
+// ══════════════════════════════════════
+function buildChartData(cfg){
+  const skus=cfg.skus||[selSku];if(!skus[0])return null;
+  const provs=cfg.provs||[...selProvs];
+  let rows=db.filter(r=>skus.includes(r[0])&&(!provs.length||provs.includes(r[1])));
+  if(cfg.from)rows=rows.filter(r=>r[2]>=cfg.from);
+  if(cfg.to)rows=rows.filter(r=>r[2]<=cfg.to);
+  if(!rows.length)return null;
+  const grp=cfg.grp||'day';
+  const gk=r=>grp==='week'?isoW(r[2]):grp==='month'?r[2].substring(0,7):r[2];
+  const serMap={};
+  rows.forEach(r=>{
+    const key=skus.length>1?`${r[0]} · ${r[1]}`:r[1];
+    if(!serMap[key])serMap[key]={lbl:key,map:{},prov:r[1]};
+    const k=gk(r);if(!serMap[key].map[k])serMap[key].map[k]=[];
+    serMap[key].map[k].push(r[3]);
+  });
+  const allK=[...new Set(rows.map(r=>gk(r)))].sort();
+  const datasets=Object.values(serMap).map((s,i)=>{
+    const c=pclr(s.prov)||PALETTE[i%PALETTE.length];
+    const data=allK.map(k=>{ const v=s.map[k];return v?v.reduce((a,b)=>a+b,0)/v.length:null; });
+    const ptR=cfg.dots==='yes'?4:cfg.dots==='no'?0:data.length<50?3:1;
+    return{label:s.lbl,data,backgroundColor:c+'30',borderColor:c,borderWidth:2,
+      pointRadius:ptR,pointHoverRadius:5,tension:.3,spanGaps:true};
+  });
+  const lbls=allK.map(k=>grp==='day'?fmtD(k):k);
+  return{labels:lbls,datasets,raw:rows};
+}
+
+function renderChart(cfg){
+  const nd=document.getElementById('chart-nodata');
+  const ct=document.getElementById('chart-content');
+  const aCfg=cfg||chartCfg||null;
+  if(!aCfg&&!selSku){nd.style.display='flex';ct.style.display='none';return;}
+  const useCfg=aCfg||{skus:[selSku],provs:[...selProvs],grp:'day',from:null,to:null,type:'line',trend:'no',dots:'auto'};
+
+  // Apply period filter to from/to only when not coming from custom config
+  if(!aCfg && !useCfg.from){
+    const now=new Date();now.setHours(0,0,0,0);
+    if(curPeriod==='week'){const f=new Date(now);f.setDate(f.getDate()-7);useCfg.from=f.toISOString().substring(0,10);}
+    else if(curPeriod==='month'){const f=new Date(now);f.setMonth(f.getMonth()-1);useCfg.from=f.toISOString().substring(0,10);}
+    else if(curPeriod==='year'){const f=new Date(now);f.setFullYear(f.getFullYear()-1);useCfg.from=f.toISOString().substring(0,10);}
+    else if(curPeriod==='custom'){useCfg.from=customFrom;useCfg.to=customTo;}
+  }
+
+  let cd=buildChartData(useCfg);
+
+  // If period filter returned no data, fall back to showing ALL data for this SKU
+  if(!cd && !aCfg){
+    const fallback={...useCfg, from:null, to:null};
+    cd=buildChartData(fallback);
+  }
+
+  if(!cd){nd.style.display='flex';ct.style.display='none';return;}
+  nd.style.display='none';ct.style.display='block';
+  document.getElementById('chart-title').textContent=useCfg.title||(useCfg.skus||[selSku]).join(' · ');
+  document.getElementById('chart-sub').textContent=`${cd.labels[0]||''} → ${cd.labels[cd.labels.length-1]||''}  ·  ${cd.datasets.length} serie(s)`;
+  // Stats
+  const vs=cd.raw.map(r=>r[3]);
+  const mn=vs.length?Math.min(...vs):0,mx=vs.length?Math.max(...vs):0,avg=vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:0;
+  const last=vs.length?vs[vs.length-1]:0,prev=vs.length>1?vs[vs.length-2]:last;
+  const pct=prev?((last-prev)/prev*100):0;
+  const pcls=pct>0?'up':pct<0?'dn':'';
+  document.getElementById('chart-stats').innerHTML=`
+    <div class="cstat"><div class="cstat-lbl">Último</div><div class="cstat-val">$${n2(last)}</div><div class="cstat-sub">USD/lb</div></div>
+    <div class="cstat ${pcls}"><div class="cstat-lbl">Variación</div><div class="cstat-val">${pct>=0?'+':''}${pct.toFixed(1)}%</div><div class="cstat-sub">vs anterior</div></div>
+    <div class="cstat"><div class="cstat-lbl">Mínimo</div><div class="cstat-val">$${n2(mn)}</div></div>
+    <div class="cstat"><div class="cstat-lbl">Máximo</div><div class="cstat-val">$${n2(mx)}</div></div>
+    <div class="cstat"><div class="cstat-lbl">Promedio</div><div class="cstat-val">$${n2(avg)}</div></div>
+    <div class="cstat"><div class="cstat-lbl">Puntos</div><div class="cstat-val">${vs.length}</div></div>`;
+  // Trend lines
+  let ds2=[...cd.datasets];
+  if(useCfg.trend==='yes'){
+    cd.datasets.forEach(d=>{
+      const v=d.data.filter(x=>x!=null);if(v.length<2)return;
+      const n=v.length,sx=n*(n-1)/2,sy=v.reduce((a,b)=>a+b,0),sxy=v.reduce((s,x,i)=>s+i*x,0),sx2=n*(n-1)*(2*n-1)/6;
+      const m=(n*sxy-sx*sy)/(n*sx2-sx*sx),b=(sy-m*sx)/n;
+      ds2.push({label:d.label+' tendencia',data:d.data.map((x,i)=>x!=null?+(m*i+b).toFixed(4):null),
+        borderColor:d.borderColor,borderDash:[5,4],borderWidth:1.5,pointRadius:0,tension:0,spanGaps:true,backgroundColor:'transparent'});
+    });
+  }
+  if(mainChart){mainChart.destroy();mainChart=null;}
+  mainChart=new Chart(document.getElementById('main-chart').getContext('2d'),{
+    type:useCfg.type||'line',
+    data:{labels:cd.labels,datasets:ds2},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{color:'#8090b0',font:{family:'DM Sans',size:10}}},
+        tooltip:{backgroundColor:'#161b27',borderColor:'#222840',borderWidth:1,
+          titleColor:'#dde3f0',bodyColor:'#8090b0',
+          callbacks:{label:c=>`${c.dataset.label}: $${n2(c.raw)}`}}},
+      scales:{x:{ticks:{color:'#5a6480',font:{size:9}},grid:{color:'#1d2235'}},
+              y:{ticks:{color:'#5a6480',font:{size:10},callback:v=>'$'+v.toFixed(2)},grid:{color:'#1d2235'}}}}
+  });
+}
+
+// ══════════════════════════════════════
+// TABLE
+// ══════════════════════════════════════
+function renderTable(){
+  let rows=filtered();
+  const q=(document.getElementById('tbl-search').value||'').toLowerCase();
+  if(q)rows=rows.filter(r=>r[0].toLowerCase().includes(q)||r[1].toLowerCase().includes(q));
+  rows.sort((a,b)=>{
+    const v=c=>c==='price'?[a,b].map(r=>r[3]):c==='date'?[a,b].map(r=>r[2]):c==='prov'?[a,b].map(r=>r[1]):[a,b].map(r=>r[0]);
+    const [va,vb]=v(sortCol);return sortDir*(va<vb?-1:va>vb?1:0);
+  });
+  // prev price map for change calc
+  const pm={};
+  [...db].sort((a,b)=>a[2]<b[2]?-1:1).forEach(r=>{const k=r[0]+'|'+r[1];pm[k]={p:pm[k]?.c,c:r[3]};});
+  document.getElementById('tbl-title').textContent=selSku||'Todos los precios';
+  document.getElementById('tbl-cnt').textContent=rows.length+' registros';
+  const tb=document.getElementById('tbl-body');tb.innerHTML='';
+  rows.forEach(r=>{
+    const idx=db.indexOf(r);
+    const k=r[0]+'|'+r[1],pdata=pm[k];
+    const prev=pdata?.p;
+    const chg=prev!=null?((r[3]-prev)/prev*100):null;
+    const chgH=chg!=null?`<span class="${chg>0?'chg-up':chg<0?'chg-dn':'chg-flat'}">${chg>0?'+':''}${chg.toFixed(1)}%</span>`:`<span class="chg-flat">—</span>`;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input type="checkbox" class="row-chk" data-i="${idx}" style="accent-color:var(--accent)"></td>
+      <td class="td-sku" title="${esc(r[0])}">${esc(r[0])}</td>
+      <td class="td-prov" style="color:${pclr(r[1])}">${esc(r[1])}</td>
+      <td class="td-date">${fmtD(r[2])}</td>
+      <td class="td-r td-price" id="pc-${idx}" data-i="${idx}"><span id="pspan-${idx}">$${n2(r[3])}</span></td>
+      <td class="td-r">${chgH}</td>
+      <td><button class="btn btn-sec" style="padding:3px 8px;font-size:10px" onclick="editP(${idx})">✏</button>
+          <button class="btn btn-danger" style="padding:3px 8px;font-size:10px" onclick="delP(${idx})">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function sortBy(c){if(sortCol===c)sortDir*=-1;else{sortCol=c;sortDir=1;}renderTable();}
+function toggleAll(cb){document.querySelectorAll('.row-chk').forEach(c=>c.checked=cb.checked);}
+function editP(i){
+  const r=db[i];if(!r)return;
+  const td=document.getElementById('pc-'+i);
+  const sp=document.getElementById('pspan-'+i);sp.style.display='none';
+  const inp=document.createElement('input');inp.className='price-inp';inp.type='number';inp.value=r[3];inp.min='0';inp.step='0.01';
+  td.appendChild(inp);inp.focus();inp.select();
+  function done(){const v=parseFloat(inp.value);if(!isNaN(v)&&v>0){db[i][3]=+v.toFixed(4);saveDB();}renderTable();if(curView==='chart')renderChart();}
+  inp.addEventListener('blur',done);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape'){inp.removeEventListener('blur',done);inp.remove();sp.style.display='';}});
+}
+function delP(i){if(!confirm('¿Eliminar?'))return;db.splice(i,1);saveDB();buildSidebar();renderTable();if(curView==='chart')renderChart();toast('Eliminado.');}
+function deleteSelected(){
+  const ids=[...document.querySelectorAll('.row-chk:checked')].map(c=>parseInt(c.dataset.i)).sort((a,b)=>b-a);
+  if(!ids.length){toast('Selecciona registros.',true);return;}
+  if(!confirm(`¿Eliminar ${ids.length} registros?`))return;
+  ids.forEach(i=>db.splice(i,1));saveDB();buildSidebar();renderTable();if(curView==='chart')renderChart();toast(ids.length+' eliminados.');
+}
+
+// ══════════════════════════════════════
+// CHART CONFIG MODAL
+// ══════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='m-chart-cfg')buildCfgModal();
+  if(id==='m-add-price')buildAddModal();
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+function buildCfgModal(){
+  const sl=document.getElementById('cfg-skus');sl.innerHTML='';
+  allSkus().forEach(s=>{
+    const d=document.createElement('div');d.className='sc-row';
+    const id='csk_'+s.replace(/\W/g,'_');
+    d.innerHTML=`<input type="checkbox" id="${id}" value="${esc(s)}" ${s===selSku?'checked':''}><label for="${id}"><span>${esc(s)}</span></label>`;
+    sl.appendChild(d);
+  });
+  const pl=document.getElementById('cfg-provs');pl.innerHTML='';
+  allProvs().forEach(p=>{
+    const b=document.createElement('button');b.className='pbtn-tog on';b.textContent=p;b.dataset.prov=p;
+    b.onclick=()=>b.classList.toggle('on');pl.appendChild(b);
+  });
+  const dates=allDates();
+  document.getElementById('cfg-from').value=dates[0]||'';
+  document.getElementById('cfg-to').value=dates[dates.length-1]||'';
+  document.getElementById('cfg-ttl').value=selSku||'';
+}
+function applyChartCfg(){
+  const skus=[...document.querySelectorAll('#cfg-skus input:checked')].map(c=>c.value);
+  const provs=[...document.querySelectorAll('#cfg-provs .pbtn-tog.on')].map(b=>b.dataset.prov);
+  if(!skus.length){toast('Selecciona al menos un SKU.',true);return;}
+  chartCfg={skus,provs,grp:document.getElementById('cfg-grp').value,
+    type:document.getElementById('cfg-type').value,
+    from:document.getElementById('cfg-from').value||null,
+    to:document.getElementById('cfg-to').value||null,
+    title:document.getElementById('cfg-ttl').value,
+    trend:document.getElementById('cfg-trend').value,
+    dots:document.getElementById('cfg-dots').value};
+  // Switch to chart view
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.vtab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-chart').classList.add('active');
+  document.querySelector('.vtab').classList.add('active');
+  curView='chart';
+  closeModal('m-chart-cfg');
+  renderChart(chartCfg);
+}
+
+// ══════════════════════════════════════
+// ADD PRICE
+// ══════════════════════════════════════
+// ══════════════════════════════════════
+// SKU EDIT / DELETE
+// ══════════════════════════════════════
+function openEditSku(s){
+  const m=getMeta(s);
+  document.getElementById('es-orig').value=s;
+  document.getElementById('es-name').value=m.name;
+  document.getElementById('es-currency').value=m.currency||'USD';
+  document.getElementById('es-unit').value=m.unit||'lb';
+  openModal('m-edit-sku');
+}
+function saveEditSku(){
+  const orig=document.getElementById('es-orig').value;
+  const name=document.getElementById('es-name').value.trim();
+  const cur=document.getElementById('es-currency').value;
+  const unit=document.getElementById('es-unit').value;
+  if(!name){toast('El nombre no puede estar vacío.',true);return;}
+  // Check name collision
+  if(name!==orig && allSkus().includes(name)){toast('Ya existe un producto con ese nombre.',true);return;}
+  setMeta(orig,name,cur,unit);
+  buildSidebar(); refresh();
+  closeModal('m-edit-sku');
+  toast('Producto actualizado.');
+}
+function confirmDeleteSku(s){
+  const cnt=db.filter(r=>r[0]===s).length;
+  if(!confirm(`¿Eliminar "${s}" y sus ${cnt} registro(s) de precio? Esta acción no se puede deshacer.`))return;
+  deleteSkuAll(s);
+  buildSidebar(); refresh();
+  toast(`"${s}" eliminado.`);
+}
+
+// ══════════════════════════════════════
+// ADD PRICE — 2-STEP FLOW
+// ══════════════════════════════════════
+let apRowCount = 0;
+
+function addPriceEntry(){ openModal('m-add-price'); }
+
+function buildAddModal(){
+  // populate provider datalist
+  const pd = document.getElementById('ap-prov-dl'); pd.innerHTML = '';
+  allProvs().forEach(p => { const o = document.createElement('option'); o.value = p; pd.appendChild(o); });
+  document.getElementById('ap-prov').value = '';
+  document.getElementById('ap-date').value = new Date().toISOString().substring(0, 10);
+}
+
+function goToStep2(){
+  const prov = document.getElementById('ap-prov').value.trim();
+  const date = document.getElementById('ap-date').value;
+  if(!prov || !date){ toast('Completa proveedor y fecha.', true); return; }
+  // Fill step 2 header
+  document.getElementById('s2-prov').textContent = prov;
+  document.getElementById('s2-date').textContent = date;
+  closeModal('m-add-price');
+  buildStep2(prov, date);
+  openModal('m-add-rows');
+}
+
+function backToStep1(){
+  closeModal('m-add-rows');
+  openModal('m-add-price');
+}
+
+function buildStep2(prov, date){
+  apRowCount = 0;
+  const tbody = document.getElementById('ap-rows');
+  tbody.innerHTML = '';
+  // Add 25 initial rows
+  for(let i = 0; i < 25; i++) addProductRow();
+  updateSummary();
+}
+
+function addProductRow(){
+  apRowCount++;
+  const tbody = document.getElementById('ap-rows');
+  const tr = document.createElement('tr');
+  tr.className = 'ap-row';
+  tr.dataset.rowid = apRowCount;
+  const curOpts = ['USD','MXN','EUR','CAD','BRL'].map(c=>`<option value="${c}">${c}</option>`).join('');
+  const uomOpts = ['lb','kg','pieza','caja','tonelada','oz','g'].map(u=>`<option value="${u}">${u}</option>`).join('');
+  tr.innerHTML = `
+    <td class="ap-row-num">${tbody.rows.length + 1}</td>
+    <td>
+      <input type="text" class="ap-inp-sku" list="ap-sku-global-dl" placeholder="Nombre del producto…"
+        oninput="onSkuInput(this);updateSummary()" autocomplete="off">
+    </td>
+    <td style="text-align:center">
+      <select class="ap-inp-cur" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--ff);font-size:11px;padding:5px 6px;outline:none;width:100%">${curOpts}</select>
+    </td>
+    <td style="text-align:center">
+      <select class="ap-inp-uom" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--ff);font-size:11px;padding:5px 6px;outline:none;width:100%">${uomOpts}</select>
+    </td>
+    <td>
+      <input type="number" class="ap-inp-price" placeholder="0.00" min="0" step="0.01"
+        oninput="onPriceInput(this);updateSummary()">
+    </td>
+    <td><button class="ap-del" onclick="removeRow(this)" title="Eliminar fila">✕</button></td>`;
+  tbody.appendChild(tr);
+
+  ensureSkuDatalist();
+
+  // Renumber all rows
+  renumberRows();
+  updateSummary();
+  // Auto-scroll to new row
+  tbody.closest('[style*="overflow"]').scrollTop = 99999;
+}
+
+function ensureSkuDatalist(){
+  if(document.getElementById('ap-sku-global-dl')) return;
+  const dl = document.createElement('datalist');
+  dl.id = 'ap-sku-global-dl';
+  allSkus().forEach(s => { const o = document.createElement('option'); o.value = s; dl.appendChild(o); });
+  document.body.appendChild(dl);
+}
+
+function onSkuInput(inp){
+  const s = inp.value.trim();
+  if(!s) return;
+  const tr = inp.closest('tr');
+  const m = skuMeta[s];
+  if(m){
+    if(tr.querySelector('.ap-inp-cur')) tr.querySelector('.ap-inp-cur').value = m.currency||'USD';
+    if(tr.querySelector('.ap-inp-uom')) tr.querySelector('.ap-inp-uom').value = m.unit||'lb';
+  }
+}
+function onPriceInput(inp){
+  inp.classList.toggle('filled', inp.value !== '' && parseFloat(inp.value) > 0);
+}
+
+function removeRow(btn){
+  btn.closest('tr').remove();
+  renumberRows();
+  updateSummary();
+}
+
+function renumberRows(){
+  document.querySelectorAll('#ap-rows tr').forEach((tr, i) => {
+    const num = tr.querySelector('.ap-row-num');
+    if(num) num.textContent = i + 1;
+  });
+}
+
+function updateSummary(){
+  const rows = document.querySelectorAll('#ap-rows tr');
+  let filled = 0;
+  rows.forEach(tr => {
+    const sku = tr.querySelector('.ap-inp-sku')?.value.trim();
+    const price = parseFloat(tr.querySelector('.ap-inp-price')?.value);
+    if(sku && !isNaN(price) && price > 0) filled++;
+  });
+  document.getElementById('s2-summary').textContent =
+    filled > 0 ? `${filled} producto(s) con precio listos para guardar` : '';
+}
+
+function saveAllPrices(){
+  const prov = document.getElementById('s2-prov').textContent.trim();
+  const date = document.getElementById('s2-date').textContent.trim();
+  if(!prov || !date){ toast('Error: falta proveedor o fecha.', true); return; }
+
+  const rows = document.querySelectorAll('#ap-rows tr');
+  let saved = 0, dupes = 0;
+  rows.forEach(tr => {
+    const sku   = tr.querySelector('.ap-inp-sku')?.value.trim();
+    const price = parseFloat(tr.querySelector('.ap-inp-price')?.value);
+    if(!sku || isNaN(price) || price <= 0) return;
+    const cur  = tr.querySelector('.ap-inp-cur')?.value || 'USD';
+    const unit = tr.querySelector('.ap-inp-uom')?.value || 'lb';
+    // Save/update meta for this SKU
+    if(!skuMeta[sku]) skuMeta[sku] = {name:sku, currency:cur, unit};
+    else { skuMeta[sku].currency = cur; skuMeta[sku].unit = unit; }
+    const idx = db.findIndex(r => r[0] === sku && r[1] === prov && r[2] === date);
+    if(idx >= 0){ db[idx][3] = +price.toFixed(4); dupes++; }
+    else { db.push([sku, prov, date, +price.toFixed(4)]); saved++; }
+  });
+  saveMeta();
+
+  if(saved + dupes === 0){ toast('No hay productos con precio para guardar.', true); return; }
+
+  saveDB(); buildSidebar(); refresh();
+  closeModal('m-add-rows');
+  toast(`${saved} precio(s) guardados${dupes ? `, ${dupes} actualizado(s)` : ''}.`);
+}
+
+// Legacy stub kept so nothing breaks
+function saveNewPrice(){ saveAllPrices(); }
+
+// ══════════════════════════════════════
+// IMPORT
+// ══════════════════════════════════════
+const impDr=document.getElementById('imp-drop');
+impDr.addEventListener('dragover',e=>{e.preventDefault();impDr.classList.add('on');});
+impDr.addEventListener('dragleave',()=>impDr.classList.remove('on'));
+impDr.addEventListener('drop',e=>{e.preventDefault();impDr.classList.remove('on');const f=e.dataTransfer.files[0];if(f)procImp(f);});
+function handleImport(e){const f=e.target.files[0];if(f)procImp(f);e.target.value='';}
+function procImp(file){
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!raw.length){toast('Archivo vacío.',true);return;}
+      const keys=Object.keys(raw[0]||{});
+      const isLong=keys.some(k=>['SKU','Proveedor','Fecha','Precio'].includes(k));
+      let recs=[];
+      if(isLong){
+        recs=raw.map(r=>{
+          const sku=String(r.SKU||r.sku||'').trim();
+          const prov=String(r.Proveedor||r.proveedor||'').trim();
+          const date=String(r.Fecha||r.fecha||'').trim();
+          const price=parseFloat(r.Precio||r.precio);
+          return sku&&prov&&date&&!isNaN(price)?[sku,prov,date,price]:null;
+        }).filter(Boolean);
+      } else {
+        const colM=keys.map(h=>{
+          const m=h.match(/^(.+?)\s*\[(\d{2}\/\d{2}\/\d{2})\]$/);
+          if(!m)return null;
+          const [,p,ds]=m;const[d,mo,y]=ds.split('/');
+          return{prov:p.trim(),date:`20${y}-${mo}-${d}`};
+        });
+        raw.forEach(row=>{
+          const sku=String(row[keys[1]]||row[keys[0]]||'').trim();if(!sku)return;
+          keys.forEach((h,i)=>{const cm=colM[i];if(!cm)return;const v=parseFloat(row[h]);if(!isNaN(v))recs.push([sku,cm.prov,cm.date,v]);});
+        });
+      }
+      if(!recs.length){toast('Sin registros válidos.',true);return;}
+      pendingImp=recs;
+      document.getElementById('imp-prev').innerHTML=`<span style="color:#5dbb85">&#x2714; ${recs.length} precios detectados.</span>`;
+      document.getElementById('imp-ok').style.display='inline-flex';
+    }catch(e){toast('Error al leer archivo.',true);}
+  };
+  r.readAsArrayBuffer(file);
+}
+function confirmImport(){
+  if(!pendingImp)return;
+  const snapExcel = db.map(r=>[...r]);
+  pendingImp.forEach(nr=>{
+    const i=db.findIndex(r=>r[0]===nr[0]&&r[1]===nr[1]&&r[2]===nr[2]);
+    if(i>=0)db[i][3]=nr[3];else db.push(nr);
+  });
+  saveDB(snapExcel);buildSidebar();refresh();
+  const n=pendingImp.length;pendingImp=null;
+  document.getElementById('imp-prev').innerHTML='';
+  document.getElementById('imp-ok').style.display='none';
+  closeModal('m-import');updateUndoBtn();toast(`${n} precios importados/actualizados.`);
+}
+
+// ══════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════
+function exportExcel(){
+  const rows=filtered().sort((a,b)=>a[2]<b[2]?-1:1);
+  if(!rows.length){toast('Sin datos en el rango.',true);return;}
+  const data=[['SKU','Proveedor','Fecha','Precio USD/lb']];
+  rows.forEach(r=>data.push([r[0],r[1],r[2],r[3]]));
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Precios');
+  XLSX.writeFile(wb,`Precios_Susazon_${selSku||'todos'}.xlsx`);toast('Excel exportado.');
+}
+function exportPDF(){
+  const{jsPDF}=window.jspdf;
+  const doc=new jsPDF('l','mm','a4');
+  doc.setFont('helvetica','bold');doc.setFontSize(14);
+  doc.text('Histórico de Precios · Susazón',14,14);
+  doc.setFont('helvetica','normal');doc.setFontSize(9);
+  doc.text(`Producto: ${selSku||'Todos'}  ·  Período: ${curPeriod}  ·  ${new Date().toLocaleDateString('es-MX')}`,14,21);
+  const rows=filtered().sort((a,b)=>a[2]<b[2]?-1:1);
+  doc.autoTable({startY:26,head:[['SKU','Proveedor','Fecha','Precio USD/lb']],
+    body:rows.map(r=>[r[0],r[1],r[2],'$'+n2(r[3])]),theme:'grid',
+    styles:{fontSize:7,cellPadding:2},
+    headStyles:{fillColor:[16,19,28],textColor:[200,168,75],fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[20,23,32]}});
+  doc.save(`Precios_Susazon_${selSku||'todos'}.pdf`);toast('PDF exportado.');
+}
+function exportChartPDF(){
+  if(!mainChart){toast('Genera una gráfica primero.',true);return;}
+  const{jsPDF}=window.jspdf;
+  const img=document.getElementById('main-chart').toDataURL('image/png');
+  const doc=new jsPDF('l','mm','a4');
+  doc.setFont('helvetica','bold');doc.setFontSize(13);
+  doc.text(document.getElementById('chart-title').textContent||'Gráfica de Precios',14,13);
+  doc.addImage(img,'PNG',10,18,275,160);
+  doc.save('Grafica_Precios_Susazon.pdf');toast('PDF gráfica exportado.');
+}
+
+
+// ══════════════════════════════════════
+// PDF IMPORT ENGINE
+// ══════════════════════════════════════
+let pdfPendingRecords = [];
+let pdfUnmatched = []; // [{pdfName, calidad, price, prov}]
+
+// Drag & drop for PDF
+const pdfDrop = document.getElementById('pdf-drop');
+pdfDrop.addEventListener('dragover', e=>{e.preventDefault();pdfDrop.classList.add('on');});
+pdfDrop.addEventListener('dragleave', ()=>pdfDrop.classList.remove('on'));
+pdfDrop.addEventListener('drop', e=>{
+  e.preventDefault(); pdfDrop.classList.remove('on');
+  const f = e.dataTransfer.files[0];
+  if(f && f.type==='application/pdf') processPdf(f);
+  else toast('Por favor sube un archivo PDF.',true);
+});
+function handlePdfUpload(e){ const f=e.target.files[0]; if(f) processPdf(f); e.target.value=''; }
+
+function resetPdfImport(){
+  pdfPendingRecords=[];pdfUnmatched=[];
+  document.getElementById('pdf-step1').style.display='block';
+  document.getElementById('pdf-step2').style.display='none';
+  document.getElementById('pdf-step1-footer').style.display='flex';
+  document.getElementById('pdf-step2-footer').style.display='none';
+  document.getElementById('pdf-preview-body').innerHTML='';
+  document.getElementById('pdf-unmatched-rows').innerHTML='';
+  document.getElementById('pdf-unmatched-wrap').style.display='none';
+}
+
+async function processPdf(file){
+  toast('Procesando PDF…');
+  try {
+    const ab = await file.arrayBuffer();
+    await parsePdf(new Uint8Array(ab), file.name);
+  } catch(e) {
+    toast('Error al leer el PDF: '+e.message, true);
+    console.error(e);
+  }
+}
+
+async function loadPdfJs(){
+  if(window.pdfjsLib) return;
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script'); s.src=src;
+    s.onload=res; s.onerror=()=>rej(new Error('No se pudo cargar: '+src));
+    document.head.appendChild(s);
+  });
+}
+
+// ── Clean a price string with Cargill's quirky spacing: "$ 9 .10" → 9.10 ──
+function cleanPrice(s){
+  if(!s) return null;
+  s = String(s).replace(/\$/g,'').trim();
+  s = s.replace(/(\d)\s+\.(\d)/g,'$1.$2'); // "9 .10" → "9.10"
+  s = s.replace(/(\d)\s+(\d)/g,'$1$2');    // "1 1.50" → "11.50"
+  s = s.trim();
+  if(/^n\/a$/i.test(s)||s==='-'||s==='') return null;
+  const v = parseFloat(s);
+  return (isNaN(v)||v<=0) ? null : v;
+}
+
+// ── Group PDF.js text items into logical rows (same Y ± tolerance) ──
+function groupRows(items, tol=4){
+  const sorted = [...items].sort((a,b)=>a.y!==b.y ? a.y-b.y : a.x-b.x);
+  const rows=[];
+  for(const it of sorted){
+    const last=rows[rows.length-1];
+    if(last && Math.abs(it.y-last.y)<=tol) last.items.push(it);
+    else rows.push({y:it.y, items:[it]});
+  }
+  rows.forEach(r=>r.items.sort((a,b)=>a.x-b.x));
+  return rows;
+}
+
+// ── Assign each item to a column given sorted boundary Xs ──
+function colOf(x, boundaries){
+  // boundaries = [x0, x1, x2, ...] — left edge of each column
+  let col=0;
+  for(let i=0;i<boundaries.length;i++){
+    if(x >= boundaries[i]-8) col=i;
+  }
+  return col;
+}
+
+// ══════════════════════════════
+//  MAIN PDF PARSER
+// ══════════════════════════════
+async function parsePdf(uint8, filename){
+  await loadPdfJs();
+  const pdf = await window.pdfjsLib.getDocument({data:uint8}).promise;
+
+  // Collect all text items across all pages with XY coordinates
+  let allItems=[], rawText='';
+  for(let p=1;p<=pdf.numPages;p++){
+    const page = await pdf.getPage(p);
+    const vp   = page.getViewport({scale:1});
+    const tc   = await page.getTextContent();
+    tc.items.forEach(it=>{
+      const s=it.str; // may be empty for spacing items
+      rawText += s+' ';
+      if(!s.trim()) return;
+      allItems.push({
+        str: s,
+        x:   Math.round(it.transform[4]*10)/10,
+        y:   Math.round((vp.height - it.transform[5])*10)/10,
+        w:   it.width
+      });
+    });
+    rawText+='\n';
+  }
+
+  // ── Detect provider ──
+  let prov=null;
+  const rt=rawText;
+  if(rt.includes('Cargill')||rt.includes('CARGILL')||filename.toLowerCase().includes('cargill')||filename.toLowerCase().includes('casa'))
+    prov='CARGILL';
+  else if(rt.includes('Greater Omaha')||rt.includes('GREATER OMAHA')||filename.toLowerCase().includes('gop')||filename.toLowerCase().includes('omaha'))
+    prov='GREATER OMAHA';
+  if(!prov){ toast('No se pudo detectar el proveedor.', true); return; }
+
+  // ── Detect date ──
+  const ME={enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
+  const EN={january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
+  let dateStr=null;
+  let dm=rt.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i);
+  if(dm){const mo=ME[dm[2].toLowerCase()];if(mo)dateStr=`${dm[3]}-${String(mo).padStart(2,'0')}-${dm[1].padStart(2,'0')}`;}
+  if(!dateStr){dm=rt.match(/(\w+)[\s,]+(\d{1,2})[,\s]+(\d{4})/i);if(dm){const mo=EN[dm[1].toLowerCase()];if(mo)dateStr=`${dm[3]}-${String(mo).padStart(2,'0')}-${dm[2].padStart(2,'0')}`;}}
+  if(!dateStr){const dm2=rt.match(/(\d{2})\/(\d{2})\/(\d{4})/);if(dm2)dateStr=`${dm2[3]}-${dm2[2]}-${dm2[1]}`;}
+  if(!dateStr) dateStr=new Date().toISOString().substring(0,10);
+
+  let records=[], unmatched=[];
+  const rows = groupRows(allItems, 2);
+
+  if(prov==='CARGILL')
+    ({records,unmatched}=parseCargill(rows, prov, dateStr));
+  else
+    ({records,unmatched}=parseGOP(rows, prov, dateStr));
+
+  renderPdfPreview(prov, dateStr, records, unmatched);
+}
+
+// ══════════════════════════════
+//  CARGILL PARSER — coordinate-independent
+//  Row structure: [CALIDAD] [CODIGO] [product words...] [$] [digit] [.XX] [$] [0] [.12]
+//  Strategy: find quality word, then grab all words until first "$", then assemble price
+// ══════════════════════════════
+function parseCargill(rows, prov, date){
+  const records=[], unmatched=[];
+  const map=pdfMap[prov]||{};
+  const QUALS=['select','choice','nr','cab','prime'];
+
+  for(const row of rows){
+    if(!row.items.length) continue;
+
+    // Row must start with a quality word (leftmost item)
+    const first=row.items[0].str.trim().toLowerCase();
+    if(!QUALS.includes(first)) continue;
+    const qual=row.items[0].str.trim();
+
+    // Skip the quality item and the code (5-digit number right after quality)
+    // Collect product words: everything that is NOT a price indicator
+    // Stop collecting when we hit "$" or "N/A"
+    const prodWords=[];
+    let priceTokens=[];
+    let hitPrice=false;
+
+    for(let i=1; i<row.items.length; i++){
+      const s=row.items[i].str.trim();
+      if(!s) continue;
+
+      // Skip the product code (pure number, typically 4-5 digits right after quality)
+      if(i===1 && /^\d{4,6}$/.test(s)) continue;
+
+      if(!hitPrice){
+        if(s==='$' || s.toUpperCase()==='N/A'){
+          hitPrice=true;
+          if(s==='N/A') break; // no price, skip row
+          priceTokens.push(s);
+        } else {
+          prodWords.push(s);
+        }
+      } else {
+        // Accumulate price tokens until we hit the second "$" (congelado column)
+        if(s==='$' && priceTokens.length>1) break; // second $ = congelado, stop
+        priceTokens.push(s);
+      }
+    }
+
+    const product=prodWords.join(' ').trim();
+    if(!product) continue;
+
+    // Assemble price from tokens: ["$","9",".10"] → "9.10"  or ["$","11.60"] → "11.60"
+    const priceRaw=priceTokens.join('').replace(/\$/g,'');
+    const price=cleanPrice(priceRaw);
+    if(price===null||price<0.01) continue;
+
+    const prodLower=product.toLowerCase();
+    const skus=lookupMapping(map, prodLower);
+    if(skus&&skus.length){
+      // Use quality-aware selection — pick the ONE SKU that matches this row's quality
+      const sku=pickSkuByQuality(skus, qual);
+      records.push({sku:normSku(sku),prov,date,price,pdfName:product,calidad:qual});
+    } else {
+      unmatched.push({pdfName:product,calidad:qual,price,prov,date});
+    }
+  }
+  return {records,unmatched};
+}
+
+// ══════════════════════════════
+//  GREATER OMAHA PARSER
+//  Two-column layout: left (CODE|PRODUCT|CHOICE|SELECT|N-ROLL|CAB|PRIME)
+//                     right (same structure repeated)
+//  Product names are ALL CAPS; prices are "$N.NN" or "-"
+// ══════════════════════════════
+function parseGOP(rows, prov, date){
+  const records=[], unmatched=[];
+  const map=pdfMap[prov]||{};
+  const QUALS=['CHOICE','SELECT','N-ROLL','CAB','PRIME'];
+
+  // Find the header row(s) to get column X positions for both halves
+  let leftCols=null, rightCols=null;
+  for(const row of rows){
+    const strs=row.items.map(i=>i.str.trim().toUpperCase());
+    const hasCode=strs.includes('CODE');
+    const hasProd=strs.includes('PRODUCT');
+    const hasChoice=strs.includes('CHOICE');
+    if(hasCode&&hasProd&&hasChoice){
+      // Collect column X positions in order
+      const colItems=row.items.filter(i=>['CODE','PRODUCT','CHOICE','SELECT','N-ROLL','CAB','PRIME','C','A','B'].includes(i.str.trim().toUpperCase()));
+      // Split into left and right halves by finding the second CODE
+      const codeItems=row.items.filter(i=>i.str.trim().toUpperCase()==='CODE');
+      if(codeItems.length>=2){
+        const midX=(codeItems[0].x+codeItems[1].x)/2;
+        const leftH=row.items.filter(i=>i.x<midX);
+        const rightH=row.items.filter(i=>i.x>=midX);
+        leftCols  = buildGOPCols(leftH);
+        rightCols = buildGOPCols(rightH);
+      } else {
+        leftCols = buildGOPCols(row.items);
+      }
+      break;
+    }
+  }
+
+  if(!leftCols){
+    // Hardcoded fallback based on known GOP PDF layout at scale 1
+    leftCols  = {product:35, prices:[155,195,235,270,305]};
+    rightCols = {product:390, prices:[505,545,585,620,655]};
+  }
+
+  const colSets=[leftCols];
+  if(rightCols) colSets.push(rightCols);
+
+  for(const row of rows){
+    if(!row.items.length) continue;
+
+    for(const cols of colSets){
+      // Product items: x roughly between cols.product and cols.prices[0]
+      const pEnd = cols.prices[0]-5;
+      const prodItems = row.items.filter(it=>it.x>=(cols.product-5)&&it.x<pEnd);
+      if(!prodItems.length) continue;
+
+      // Product name should be ALL CAPS and not a pure number/code
+      const product=prodItems.map(i=>i.str.trim()).filter(Boolean).join(' ');
+      if(!product||product.length<3) continue;
+      if(/^\d/.test(product)) continue; // skip code-only rows
+      if(!/[A-Z]{2}/.test(product)) continue; // must have at least 2 caps = actual product name
+
+      // Price items: x near each quality column
+      const priceMap={};
+      QUALS.forEach((q,qi)=>{
+        const targetX=cols.prices[qi];
+        if(!targetX) return;
+        const nearby=row.items.filter(it=>Math.abs(it.x-targetX)<=18);
+        if(!nearby.length) return;
+        const raw=nearby.map(i=>i.str).join('');
+        priceMap[q]=raw;
+      });
+
+      const prodLower=product.toLowerCase();
+      let addedUnmatched=false;
+
+      QUALS.forEach((qual,qi)=>{
+        const raw=priceMap[qual];
+        if(!raw) return;
+        const price=cleanPrice(raw);
+        if(price===null) return;
+
+        const skus=lookupMapping(map, prodLower);
+        if(skus&&skus.length){
+          const sku=pickSkuByQuality(skus,qual);
+          records.push({sku:normSku(sku),prov,date,price,pdfName:product,calidad:qual});
+        } else if(!addedUnmatched){
+          addedUnmatched=true;
+          unmatched.push({pdfName:product,calidad:qual,price,prov,date});
+        }
+      });
+    }
+  }
+  return {records,unmatched};
+}
+
+function buildGOPCols(items){
+  // Given header items for one half, extract product x and price column Xs
+  let productX=null;
+  const priceXs=[];
+  for(const it of items){
+    const u=it.str.trim().toUpperCase();
+    if(u==='PRODUCT') productX=it.x;
+    if(['CHOICE','SELECT'].includes(u)||u==='N-ROLL'||u==='CAB'||u==='PRIME'||(u==='C'&&items.some(i=>i.str==='A'))){
+      if(!['CODE','PRODUCT'].includes(u)) priceXs.push(it.x);
+    }
+  }
+  // Deduplicate and sort
+  const uniquePrices=[...new Set(priceXs)].sort((a,b)=>a-b);
+  return {product: productX||35, prices: uniquePrices.slice(0,5)};
+}
+
+function lookupMapping(map, prodLower){
+  // Exact match first
+  if(map[prodLower]) return map[prodLower];
+  // Then try partial — but prefer the LONGEST matching key (most specific)
+  let bestKey=null, bestLen=0;
+  for(const k of Object.keys(map)){
+    if(prodLower.includes(k) || k.includes(prodLower)){
+      if(k.length > bestLen){ bestKey=k; bestLen=k.length; }
+    }
+  }
+  return bestKey ? map[bestKey] : null;
+}
+
+function pickSkuByQuality(skus, qual){
+  const q=qual.toLowerCase();
+  // First pass: exact quality keyword match in SKU name
+  for(const s of skus){
+    const sl=s.toLowerCase();
+    if(q==='cab'    &&sl.includes('cab'))   return s;
+    if(q==='choice' &&sl.includes('choice')) return s;
+    if(q==='select' &&sl.includes('select')) return s;
+    if(q==='prime'  &&(sl.includes('prime')||sl.includes('usda'))) return s;
+    if((q==='n-roll'||q==='nr')&&(sl.includes('nr')||sl.includes('n-roll'))) return s;
+  }
+  // Second pass: if only one SKU, use it regardless
+  if(skus.length===1) return skus[0];
+  // Third pass: for select with no "select" in any SKU, pick the one without "choice/cab/prime"
+  if(q==='select'){
+    const nonChoice=skus.find(s=>!s.toLowerCase().includes('choice')&&!s.toLowerCase().includes('cab')&&!s.toLowerCase().includes('prime'));
+    if(nonChoice) return nonChoice;
+  }
+  return skus[0];
+}
+
+function renderPdfPreview(prov, dateStr, records, unmatched){
+  pdfPendingRecords = records;
+  pdfUnmatched = unmatched;
+
+  document.getElementById('pdf-step1').style.display='none';
+  document.getElementById('pdf-step2').style.display='block';
+  document.getElementById('pdf-step1-footer').style.display='none';
+  document.getElementById('pdf-step2-footer').style.display='flex';
+  document.getElementById('pdf-prov-label').textContent = prov;
+  document.getElementById('pdf-date-label').textContent = '· Fecha: '+dateStr;
+  document.getElementById('pdf-stats').innerHTML=`
+    <div class="pdf-stat"><span style="color:#5dbb85">●</span> ${records.length} precios detectados</div>
+    <div class="pdf-stat"><span style="color:#f0a050">●</span> ${unmatched.length} sin mapeo</div>`;
+
+  // ── Mapped rows (with checkboxes) ──
+  const tbody = document.getElementById('pdf-preview-body');
+  tbody.innerHTML='';
+  records.forEach((r,idx)=>{
+    const tr=document.createElement('tr');
+    tr.dataset.idx=idx;
+    tr.innerHTML=`
+      <td style="text-align:center">
+        <input type="checkbox" class="pdf-row-chk" checked data-idx="${idx}"
+          style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer"
+          onchange="updatePdfSelCount()">
+      </td>
+      <td style="color:var(--muted2);font-size:11px">${esc(r.pdfName)}</td>
+      <td><span style="font-size:10px;padding:2px 7px;background:var(--surf2);border:1px solid var(--border)">${esc(r.calidad)}</span></td>
+      <td style="font-weight:600;color:var(--accent)">${esc(r.sku)}</td>
+      <td class="r" style="font-weight:700;color:var(--text)">$${r.price.toFixed(2)}</td>
+      <td><span class="pdf-match-ok">✔ Mapeado</span></td>`;
+    tbody.appendChild(tr);
+  });
+
+  // ── Unmatched rows ──
+  if(unmatched.length){
+    document.getElementById('pdf-unmatched-wrap').style.display='block';
+    const cont = document.getElementById('pdf-unmatched-rows');
+    cont.innerHTML='';
+    const skuOpts = allSkus().map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+    unmatched.forEach((u,i)=>{
+      const pendingIdx = records.length + i; // index in pdfPendingRecords after being mapped
+      const d=document.createElement('div'); d.className='unmatched-row';
+      d.dataset.unmatchedIdx = i;
+      d.innerHTML=`
+        <div style="font-size:11px;display:flex;align-items:center;gap:6px">
+          <span style="color:var(--muted2)">${esc(u.pdfName)}</span>
+          <span style="font-size:10px;padding:2px 6px;background:var(--surf2)">${esc(u.calidad)}</span>
+          <span style="color:var(--accent)">$${u.price.toFixed(2)}</span>
+        </div>
+        <select class="map-select" data-unmatched-idx="${i}" onchange="onUnmatchedMap(this)">
+          <option value="">— No importar —</option>
+          ${skuOpts}
+        </select>`;
+      cont.appendChild(d);
+    });
+  }
+
+  // Reset select-all and update count
+  const chkAll = document.getElementById('pdf-chk-all');
+  if(chkAll) chkAll.checked = true;
+  updatePdfSelCount();
+  toast(`PDF procesado: ${records.length} precios, ${unmatched.length} sin mapeo.`);
+}
+
+function onUnmatchedMap(sel){
+  const i    = parseInt(sel.dataset.unmatchedIdx);
+  const u    = pdfUnmatched[i];
+  if(!sel.value){ updatePdfSelCount(); return; }
+
+  // Remove any previously mapped record for this unmatched item
+  pdfPendingRecords = pdfPendingRecords.filter(r=>r._unmatchedIdx !== i);
+
+  // Add new mapped record with a checkbox row in the preview table
+  const idx = pdfPendingRecords.length;
+  const rec = {sku:sel.value, prov:u.prov, date:u.date, price:u.price,
+               pdfName:u.pdfName, calidad:u.calidad, _unmatchedIdx:i};
+  pdfPendingRecords.push(rec);
+  learnPdfMapping(u.prov, u.pdfName, sel.value);
+
+  // Add row to preview table
+  const tbody = document.getElementById('pdf-preview-body');
+  // Remove existing row for this unmatched item if any
+  const existing = tbody.querySelector(`tr[data-unmatched-idx="${i}"]`);
+  if(existing) existing.remove();
+
+  const tr=document.createElement('tr');
+  tr.dataset.unmatchedIdx=i;
+  tr.dataset.idx=idx;
+  tr.innerHTML=`
+    <td style="text-align:center">
+      <input type="checkbox" class="pdf-row-chk" checked data-idx="${idx}"
+        style="accent-color:var(--accent);width:13px;height:13px;cursor:pointer"
+        onchange="updatePdfSelCount()">
+    </td>
+    <td style="color:var(--muted2);font-size:11px">${esc(u.pdfName)}</td>
+    <td><span style="font-size:10px;padding:2px 7px;background:var(--surf2);border:1px solid var(--border)">${esc(u.calidad)}</span></td>
+    <td style="font-weight:600;color:var(--accent)">${esc(sel.value)}</td>
+    <td class="r" style="font-weight:700">$${u.price.toFixed(2)}</td>
+    <td><span class="pdf-match-warn">✔ Manual</span></td>`;
+  tbody.appendChild(tr);
+
+  sel.closest('.unmatched-row').style.opacity='0.5';
+  sel.disabled=true;
+  updatePdfSelCount();
+}
+
+
+// ══════════════════════════════════════
+// CURRENCY CALCULATOR (dynamic)
+// ══════════════════════════════════════
+// Units: usd_lb, usd_kg, mxn_kg, mxn_lb
+// Conversion factors: 1 kg = 2.20462 lb
+
+function calcDynamic(){
+  const val  = parseFloat(document.getElementById('calc-val').value);
+  const tc   = parseFloat(document.getElementById('calc-tc').value);
+  const from = document.getElementById('calc-from').value;
+  const to   = document.getElementById('calc-to').value;
+  const res  = document.getElementById('calc-result');
+  const lbl  = document.getElementById('calc-result-lbl');
+
+  const toLabel = { usd_lb:'USD / lb', usd_kg:'USD / kg', mxn_kg:'MXN / kg', mxn_lb:'MXN / lb' };
+  lbl.textContent = '= ' + toLabel[to];
+
+  if(isNaN(val) || val <= 0 || (needsTc(from,to) && (isNaN(tc)||tc<=0))){
+    res.textContent = '—'; return;
+  }
+
+  // Convert everything to USD/kg as common base
+  let usdKg;
+  switch(from){
+    case 'usd_lb': usdKg = val * 2.20462; break;
+    case 'usd_kg': usdKg = val; break;
+    case 'mxn_kg': usdKg = val / tc; break;
+    case 'mxn_lb': usdKg = (val / tc) * 2.20462; break;
+  }
+
+  let result;
+  switch(to){
+    case 'usd_lb': result = usdKg / 2.20462; break;
+    case 'usd_kg': result = usdKg; break;
+    case 'mxn_kg': result = usdKg * tc; break;
+    case 'mxn_lb': result = (usdKg * tc) / 2.20462; break;
+  }
+
+  const sym = to.startsWith('usd') ? '$' : '$';
+  res.textContent = sym + result.toFixed(2);
+}
+
+function needsTc(from, to){
+  const fromCur = from.startsWith('usd') ? 'usd' : 'mxn';
+  const toCur   = to.startsWith('usd')   ? 'usd' : 'mxn';
+  return fromCur !== toCur;
+}
+
+function swapCalc(){
+  const fromEl = document.getElementById('calc-from');
+  const toEl   = document.getElementById('calc-to');
+  const tmp    = fromEl.value;
+  fromEl.value = toEl.value;
+  toEl.value   = tmp;
+  calcDynamic();
+}
+
+// ══════════════════════════════════════
+// PDF IMPORT — CHECKBOX SELECTION
+// ══════════════════════════════════════
+// Normalize SKU name: match existing DB casing, else UPPERCASE
+function normSku(s){
+  const up = String(s||'').trim().toUpperCase();
+  // If an existing SKU matches case-insensitively, use its exact casing
+  const match = allSkus().find(x=>x.toUpperCase()===up);
+  return match || up;
+}
+
+// Merge duplicate SKUs that differ only in case (run once after import)
+function dedupeSkus(){
+  const canonical = {}; // UPPERCASE → first seen exact casing
+  allSkus().forEach(s=>{ const up=s.toUpperCase(); if(!canonical[up]) canonical[up]=s; });
+  let merged=0;
+  db.forEach(r=>{
+    const up=r[0].toUpperCase();
+    if(canonical[up] && canonical[up]!==r[0]){ r[0]=canonical[up]; merged++; }
+  });
+  // Also fix skuMeta keys
+  Object.keys(skuMeta).forEach(k=>{
+    const up=k.toUpperCase();
+    if(canonical[up] && canonical[up]!==k){
+      skuMeta[canonical[up]]=skuMeta[k];
+      delete skuMeta[k];
+    }
+  });
+  if(merged){ saveDB(); saveMeta(); buildSidebar(); refresh(); }
+  return merged;
+}
+
+function toggleAllPdfRows(checked){
+  document.querySelectorAll('.pdf-row-chk').forEach(c=>c.checked=checked);
+  updatePdfSelCount();
+}
+
+function updatePdfSelCount(){
+  const all     = document.querySelectorAll('.pdf-row-chk').length;
+  const checked = document.querySelectorAll('.pdf-row-chk:checked').length;
+  const el = document.getElementById('pdf-sel-count');
+  if(el) el.textContent = `${checked} de ${all} seleccionados`;
+  const chkAll = document.getElementById('pdf-chk-all');
+  if(chkAll){
+    chkAll.indeterminate = checked>0 && checked<all;
+    chkAll.checked = checked===all;
+  }
+}
+
+function confirmPdfImport(){
+  const checkedIdxs = new Set(
+    [...document.querySelectorAll('.pdf-row-chk:checked')].map(c=>parseInt(c.dataset.idx))
+  );
+  const toImport = pdfPendingRecords.filter((_,i)=>checkedIdxs.has(i));
+  if(!toImport.length){toast('No hay precios seleccionados para importar.',true);return;}
+  const snapshot = db.map(r=>[...r]); // snapshot BEFORE changes
+  let saved=0, dupes=0;
+  toImport.forEach(r=>{
+    const skuNorm = normSku(r.sku);
+    const existingSku = allSkus().find(s=>s.toUpperCase()===skuNorm) || skuNorm;
+    const idx=db.findIndex(x=>x[0].toUpperCase()===skuNorm&&x[1]===r.prov&&x[2]===r.date);
+    if(idx>=0){db[idx][3]=+r.price.toFixed(4);dupes++;}
+    else{db.push([existingSku,r.prov,r.date,+r.price.toFixed(4)]);saved++;}
+  });
+  saveDB(snapshot); buildSidebar(); refresh();
+  closeModal('m-import-pdf'); resetPdfImport();
+  updateUndoBtn();
+  toast(`PDF importado: ${saved} nuevos, ${dupes} actualizados.`);
+}
+
+// ══════════════════════════════════════
+// AUTH  (persists across browser closes via localStorage)
+// ══════════════════════════════════════
+const USERS = { compras123: '12345' };
+const AUTH_KEY = 'susazon_prices_auth';
+
+function doLogin(){
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  if(USERS[u] && USERS[u] === p){
+    localStorage.setItem(AUTH_KEY, u);
+    showApp(u);
+  } else {
+    document.getElementById('lg-err').style.display = 'block';
+  }
+}
+function doLogout(){
+  localStorage.removeItem(AUTH_KEY);
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('l-user').value = '';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('lg-err').style.display = 'none';
+  if(mainChart){ mainChart.destroy(); mainChart = null; }
+}
+function showApp(user){
+  document.getElementById('login-screen').style.display = 'none';
+  init();
+}
+
+// keyboard shortcuts on login
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('l-user').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('l-pass').focus(); });
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function init(){
+  // Clean up any case-duplicate SKUs from previous imports
+  dedupeSkus();
+  updateUndoBtn();
+  buildSidebar();
+  const skus=allSkus();
+  if(skus.length){selSku=skus[0];filterSkus();renderChart();}
+  const dates=allDates();
+  if(dates.length){
+    document.getElementById('range-from').value=dates[0];
+    document.getElementById('range-to').value=dates[dates.length-1];
+  }
+}
+
+// Auto-restore session from localStorage
+(function(){
+  const saved = localStorage.getItem(AUTH_KEY);
+  if(saved && USERS[saved]){
+    showApp(saved);
+  }
+  // else: login screen is visible by default (no change needed)
+})();
+</script>
+</body>
+</html>

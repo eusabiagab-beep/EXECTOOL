@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compras Suve P&amp;M</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0c0e14;--surf:#13161f;--surf2:#1a1e2b;--border:#252a3a;
+  --accent:#e89b1a;--accent2:#f5bc50;--danger:#c0392b;--success:#27ae60;
+  --info:#2980b9;--warn:#d4a017;--text:#e4e8f0;--muted:#6b7390;
+  --ff:'DM Sans',sans-serif;--fd:'Bebas Neue',sans-serif;
+  --cell-w:62px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--ff);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* LOGIN */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 80% 60% at 55% 35%,#1b2038,var(--bg));position:relative}
+.lg-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lg-bg::before{content:'';position:absolute;inset:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:64px 64px;opacity:.2}
+.lg-line{position:absolute;top:0;left:50%;width:1px;height:100%;
+  background:linear-gradient(to bottom,transparent,var(--accent),transparent);opacity:.12}
+.lg-card{position:relative;width:440px;max-width:95vw;background:var(--surf);
+  border:1px solid var(--border);border-top:3px solid var(--accent);padding:52px 44px 44px;
+  box-shadow:0 48px 96px rgba(0,0,0,.65);animation:fadeUp .45s cubic-bezier(.22,1,.36,1) both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+.lg-logo{font-family:var(--fd);font-size:44px;letter-spacing:2px;color:var(--accent);line-height:1}
+.lg-tag{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:38px;margin-top:4px}
+.lg-sep{width:40px;height:2px;background:var(--accent);margin-bottom:10px}
+.lg-f{margin-bottom:16px}
+.lg-f label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.lg-f input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:14px;padding:12px 14px;outline:none;transition:border-color .2s}
+.lg-f input:focus{border-color:var(--accent)}
+.lg-btn{width:100%;margin-top:26px;background:var(--accent);color:#000;border:none;
+  font-family:var(--fd);font-size:20px;letter-spacing:3px;padding:14px;cursor:pointer;transition:background .2s,transform .1s}
+.lg-btn:hover{background:var(--accent2)}.lg-btn:active{transform:scale(.98)}
+.lg-err{margin-top:14px;padding:10px 14px;background:rgba(200,60,60,.12);
+  border:1px solid rgba(200,60,60,.4);color:#e07070;font-size:13px;display:none}
+
+/* APP */
+#app{display:none;flex-direction:column;min-height:100vh}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:200;height:56px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 22px;background:var(--surf);border-bottom:1px solid var(--border)}
+.nav-brand{display:flex;align-items:baseline;gap:10px}
+.nav-brand h1{font-family:var(--fd);font-size:26px;letter-spacing:2px;color:var(--accent);line-height:1}
+.nav-brand span{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.nav-r{display:flex;align-items:center;gap:10px}
+.nav-user{font-size:12px;color:var(--muted);letter-spacing:1px}
+.btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);
+  font-family:var(--ff);font-size:11px;letter-spacing:1px;padding:5px 12px;cursor:pointer;transition:all .2s}
+.btn-logout:hover{border-color:#c0392b;color:#c0392b}
+
+/* TABS */
+.tabs-bar{display:flex;border-bottom:1px solid var(--border);background:var(--surf);padding:0 22px}
+.tab{font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+  padding:13px 18px;cursor:pointer;border:none;background:transparent;
+  color:var(--muted);border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* MAIN */
+.main{flex:1;padding:22px;max-width:100%;margin:0 auto;width:100%}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* BUTTONS */
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  font-family:var(--ff);font-size:13px;font-weight:500;padding:8px 15px;transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#000}.btn-primary:hover{background:var(--accent2)}
+.btn-sec{background:var(--surf2);color:var(--text);border:1px solid var(--border)}
+.btn-sec:hover{border-color:var(--accent);color:var(--accent)}
+.btn-danger{background:rgba(192,57,43,.1);color:#e07070;border:1px solid rgba(192,57,43,.25)}
+.btn-danger:hover{background:rgba(192,57,43,.2)}
+.btn-suc{background:rgba(39,174,96,.1);color:#5dbb85;border:1px solid rgba(39,174,96,.25)}
+.btn-suc:hover{background:rgba(39,174,96,.2)}
+.btn-info{background:rgba(41,128,185,.1);color:#79b8e8;border:1px solid rgba(41,128,185,.25)}
+.btn-info:hover{background:rgba(41,128,185,.2)}
+
+/* WEEK BAR */
+.week-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;
+  padding:12px 16px;background:var(--surf);border:1px solid var(--border)}
+.week-bar label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.week-bar select,.week-bar input[type=number]{background:var(--surf2);border:1px solid var(--border);
+  color:var(--text);font-family:var(--ff);font-size:13px;padding:7px 11px;outline:none;cursor:pointer}
+.week-bar select:focus,.week-bar input:focus{border-color:var(--accent)}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:18px}
+.stat{background:var(--surf);border:1px solid var(--border);border-top:3px solid var(--accent);padding:14px 16px}
+.stat.c-blue{border-top-color:var(--info)}.stat.c-green{border-top-color:var(--success)}
+.stat.c-red{border-top-color:var(--danger)}.stat.c-warn{border-top-color:var(--warn)}
+.stat-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.stat-val{font-family:var(--fd);font-size:32px;color:var(--text);line-height:1}
+
+/* DETAIL TABLE */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border)}
+table.dt{width:100%;border-collapse:collapse;font-size:13px}
+table.dt thead tr{background:var(--surf2)}
+table.dt th{padding:9px 13px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--muted);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+table.dt th.r{text-align:right}
+table.dt tbody tr{border-bottom:1px solid rgba(37,42,58,.7);transition:background .12s}
+table.dt tbody tr:hover{background:rgba(255,255,255,.02)}
+table.dt td{padding:9px 13px;vertical-align:middle}
+.c-sku{font-weight:700;color:var(--accent);font-size:12px;letter-spacing:.5px}
+.c-r{text-align:right;font-variant-numeric:tabular-nums}
+.c-low{color:#e07070;font-weight:700}.c-ok{color:#5dbb85}.c-warn-t{color:#e6c456;font-weight:600}
+.c-muted{color:var(--muted);font-size:12px}
+.actions-cell{display:flex;gap:5px;justify-content:flex-end}
+.ibtn{width:27px;height:27px;display:inline-flex;align-items:center;justify-content:center;
+  border:none;cursor:pointer;font-size:13px;background:transparent;transition:all .15s}
+.ibtn-e{color:var(--info);border:1px solid rgba(41,128,185,.25)}.ibtn-e:hover{background:rgba(41,128,185,.12)}
+.ibtn-d{color:#e07070;border:1px solid rgba(192,57,43,.25)}.ibtn-d:hover{background:rgba(192,57,43,.12)}
+
+/* EMPTY */
+.empty{padding:60px 20px;text-align:center;color:var(--muted)}
+.empty-icon{font-size:48px;opacity:.22;margin-bottom:12px}
+.empty p{font-size:14px;line-height:1.6}
+
+/* ══════════════════════════════════
+   LOB TABLE  
+══════════════════════════════════ */
+.lob-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;
+  padding:12px 16px;background:var(--surf);border:1px solid var(--border)}
+.lob-controls label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.lob-controls input[type=number],.lob-controls input[type=text],.lob-controls select{
+  background:var(--surf2);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:13px;padding:7px 11px;outline:none}
+.lob-controls input:focus,.lob-controls select:focus{border-color:var(--accent)}
+
+/* legend */
+.lob-legend{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.leg-dot{width:14px;height:14px;flex-shrink:0}
+
+/* LOB wrapper */
+.lob-outer{overflow:auto;border:1px solid var(--border);max-height:calc(100vh - 260px);position:relative}
+
+/* LOB table */
+.lob-tbl{border-collapse:collapse;font-size:11px;white-space:nowrap;table-layout:fixed}
+.lob-tbl th,.lob-tbl td{padding:0;border:none}
+
+/* Sticky left columns */
+.lob-tbl .sk{
+  position:sticky;z-index:3;background:var(--surf2);
+  border-right:1px solid var(--border);
+}
+.lob-tbl tbody tr .sk{background:var(--surf)}
+.lob-tbl tbody tr:hover .sk{background:#1d2232}
+.lob-tbl .sk.s0{left:0;width:100px;min-width:100px;max-width:100px}
+.lob-tbl .sk.s1{left:100px;width:180px;min-width:180px;max-width:180px}
+.lob-tbl .sk.s2{left:280px;width:50px;min-width:50px;max-width:50px;border-right:2px solid var(--border)}
+
+/* Sticky header rows */
+.lob-tbl thead tr{position:sticky;z-index:4}
+.lob-tbl thead tr:first-child{top:0}
+.lob-tbl thead tr:last-child{top:28px}
+
+/* Week header */
+.wk-th{
+  background:var(--surf2);
+  font-family:var(--fd);font-size:12px;letter-spacing:.5px;color:var(--text);
+  padding:6px 4px;text-align:center;
+  border-bottom:1px solid var(--border);border-left:2px solid var(--border);
+  width:calc(var(--cell-w)*4);min-width:calc(var(--cell-w)*4);
+}
+.wk-th.cur{color:var(--accent);border-top:2px solid var(--accent);background:#16192a}
+.wk-th.past{opacity:.55}
+
+/* metric sub-header */
+.m-th{
+  background:#0f1119;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:700;
+  padding:5px 0;text-align:center;
+  border-bottom:2px solid var(--border);
+  width:var(--cell-w);min-width:var(--cell-w);
+}
+.m-th.ini{color:#5dade2;border-left:2px solid var(--border)}
+.m-th.comp{color:#58d68d}
+.m-th.dem{color:var(--accent)}
+.m-th.fin{color:#c39bd3}
+
+/* sticky header fixed col headers */
+.hsk{background:var(--surf2);border-bottom:1px solid var(--border);padding:6px 10px;
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.hsk2{background:#0f1119;border-bottom:2px solid var(--border);padding:5px 10px;
+  font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* data cells */
+.dc{
+  width:var(--cell-w);min-width:var(--cell-w);max-width:var(--cell-w);
+  text-align:right;font-variant-numeric:tabular-nums;
+  padding:0;height:30px;vertical-align:middle;
+  border-left:1px solid rgba(37,42,58,.5);
+  position:relative;
+}
+.dc.wk-first{border-left:2px solid var(--border)}
+.dc span{display:block;padding:0 7px;font-size:11px;color:var(--text);line-height:30px}
+.dc.ini span{color:#5dade2;opacity:.8}
+.dc.comp span{color:#58d68d;opacity:.9}
+.dc.dem span{color:var(--accent);opacity:.9}
+.dc.fin span{color:#c39bd3}
+
+/* STATUS COLORS on fin cells */
+.dc.fin.st-warn{background:rgba(212,160,23,.18)!important}
+.dc.fin.st-warn span{color:#e6c456;font-weight:700}
+.dc.fin.st-crit{background:rgba(192,57,43,.22)!important}
+.dc.fin.st-crit span{color:#e07070;font-weight:700}
+.dc.fin.st-ok span{color:#58d68d}
+
+/* editable cells */
+.dc.editable{cursor:text}
+.dc.editable:hover{background:rgba(255,255,255,.04)}
+.dc input.cell-inp{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  background:rgba(232,155,26,.15);
+  border:1px solid var(--accent);
+  color:var(--text);font-family:var(--ff);font-size:11px;
+  text-align:right;padding:0 7px;
+  outline:none;z-index:10;
+}
+
+/* empty cell */
+.dc.mt span{color:rgba(37,42,58,.9)}
+
+/* SKU body cells */
+.td-sku{font-weight:700;color:var(--accent);font-size:11px;letter-spacing:.3px;padding:0 10px;height:30px;line-height:30px;overflow:hidden;text-overflow:ellipsis}
+.td-desc{font-size:11px;color:var(--text);padding:0 10px;height:30px;line-height:30px;overflow:hidden;text-overflow:ellipsis}
+.td-uom{font-size:10px;color:var(--muted);text-align:center;padding:0 6px;height:30px;line-height:30px}
+
+/* totals row */
+.lob-tbl tr.sum-row td{border-top:2px solid var(--border);background:var(--surf2)!important;font-weight:700}
+.lob-tbl tr.sum-row .sk{background:var(--surf2)!important}
+.lob-tbl tr.sum-row .dc span{font-weight:700}
+.lob-tbl tr.sum-row .td-sku{font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+
+/* row zebra */
+.lob-tbl tbody tr:nth-child(even) td:not(.sk){background:rgba(255,255,255,.013)}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surf);border:1px solid var(--border);border-top:3px solid var(--accent);
+  width:560px;max-width:96vw;max-height:92vh;overflow-y:auto;padding:32px 28px 26px;
+  animation:mIn .22s cubic-bezier(.22,1,.36,1) both}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(-8px)}to{opacity:1;transform:none}}
+.modal-h{font-family:var(--fd);font-size:28px;letter-spacing:1px;color:var(--accent);margin-bottom:20px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.frow.full{grid-template-columns:1fr}.frow.three{grid-template-columns:1fr 1fr 1fr}
+.ff-{display:flex;flex-direction:column;gap:6px}
+.ff- label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.ff- input,.ff- select{background:var(--bg);border:1px solid var(--border);color:var(--text);
+  font-family:var(--ff);font-size:13px;padding:9px 12px;outline:none;transition:border .2s}
+.ff- input:focus,.ff- select:focus{border-color:var(--accent)}
+.mfooter{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.wk-list{display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto;margin-bottom:14px}
+.wk-item{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);padding:9px 13px}
+.wk-item span{flex:1;font-size:13px}
+.wk-del{color:#e07070;background:transparent;border:none;cursor:pointer;font-size:14px;padding:2px 6px;opacity:.7;transition:opacity .15s}
+.wk-del:hover{opacity:1}
+.drop-zone{border:2px dashed var(--border);padding:32px;text-align:center;color:var(--muted);
+  font-size:13px;cursor:pointer;transition:all .2s;margin-bottom:14px}
+.drop-zone:hover,.drop-zone.on{border-color:var(--accent);color:var(--accent);background:rgba(232,155,26,.04)}
+.drop-zone svg{display:block;margin:0 auto 10px;opacity:.45;transition:opacity .2s}
+.drop-zone:hover svg,.drop-zone.on svg{opacity:1}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--surf2);
+  border:1px solid var(--border);border-left:3px solid var(--success);color:var(--text);
+  font-size:13px;padding:11px 16px;box-shadow:0 10px 32px rgba(0,0,0,.45);
+  transform:translateY(80px);opacity:0;transition:all .28s;max-width:320px}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.err{border-left-color:#c0392b}
+
+/* year separator in LOB table */
+.yr-sep-th{
+  background:#0a0c12;
+  font-family:var(--fd);font-size:14px;letter-spacing:2px;color:var(--accent2);
+  text-align:center;padding:8px 16px;
+  border-left:3px solid var(--accent);border-bottom:2px solid var(--accent);
+  position:sticky;top:0;z-index:5;
+}
+.yr-sep-th2{
+  background:#0a0c12;border-bottom:2px solid var(--accent);
+  border-left:3px solid var(--accent);
+  position:sticky;top:28px;z-index:5;
+}
+
+/* year pill toggle */
+.yr-pill{
+  font-size:11px;font-weight:600;letter-spacing:.5px;padding:5px 13px;cursor:pointer;
+  border:1px solid var(--border);background:transparent;color:var(--muted);
+  transition:all .15s;font-family:var(--ff);display:inline-flex;align-items:center;gap:6px;
+}
+.yr-pill.on{border-color:var(--accent);color:var(--accent);background:rgba(232,155,26,.12)}
+.yr-pill .yr-rm{opacity:.5;font-size:13px;line-height:1;transition:opacity .15s}
+.yr-pill:hover .yr-rm{opacity:1}
+
+/* year checkbox row */
+.yr-chk-row{display:flex;align-items:center;gap:12px;background:var(--bg);border:1px solid var(--border);padding:10px 14px}
+.yr-chk-row input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.yr-chk-row label{font-size:13px;cursor:pointer;flex:1}
+.yr-chk-row .yr-rm-btn{color:#e07070;background:transparent;border:none;cursor:pointer;font-size:13px;opacity:.6;transition:opacity .15s}
+.yr-chk-row .yr-rm-btn:hover{opacity:1}
+
+@media(max-width:640px){.frow,.frow.three{grid-template-columns:1fr}.nav-brand span{display:none}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="lg-bg"><div class="lg-line"></div></div>
+  <div class="lg-card">
+    <div class="lg-logo">COMPRAS<br>SUVE P&amp;M</div>
+    <div class="lg-tag">Control de Inventario · Semanas Fiscales</div>
+    <div class="lg-sep"></div>
+    <div class="lg-f"><label>Usuario</label><input type="text" id="l-user" placeholder="username" autocomplete="username"></div>
+    <div class="lg-f"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="lg-btn" onclick="doLogin()">INGRESAR AL SISTEMA</button>
+    <div class="lg-err" id="lg-err">⚠ Usuario o contraseña incorrectos.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav class="nav">
+    <div class="nav-brand"><h1>SUVE P&amp;M</h1><span>Compras &amp; Inventario</span></div>
+    <div class="nav-r">
+      <span class="nav-user" id="nav-u"></span>
+      <button class="btn-logout" onclick="doLogout()">✕ SALIR</button>
+    </div>
+  </nav>
+  <div class="tabs-bar">
+    <button class="tab active" onclick="switchTab('detail',this)">📋 Detalle por Semana</button>
+    <button class="tab" onclick="switchTab('lob',this)">📊 Vista LOB · FW1–FW52</button>
+  </div>
+
+  <div class="main">
+
+    <!-- ══ TAB DETALLE ══ -->
+    <div class="tab-panel active" id="panel-detail">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="openModal('m-sku')">＋ Agregar SKU</button>
+        <button class="btn btn-info" onclick="openModal('m-import')">⬆ Importar Excel</button>
+        <button class="btn btn-sec" onclick="openModal('m-weeks')">📅 Gestionar Semanas</button>
+        <button class="btn btn-suc" onclick="exportExcel()">⬇ Exportar Excel</button>
+        <button class="btn btn-danger" onclick="confirmClearAll()">🗑 Limpiar Todo</button>
+      </div>
+      <div class="week-bar">
+        <label>Semana Fiscal</label>
+        <select id="w-sel" onchange="onWeekChange()"></select>
+        <label>Año</label>
+        <input type="number" id="y-sel" value="2025" min="2020" max="2040" style="width:80px" onchange="onWeekChange()">
+      </div>
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="tbl-wrap">
+        <table class="dt">
+          <thead>
+            <tr>
+              <th>#</th><th>SKU</th><th>Descripción</th><th>Categoría</th><th>UOM</th>
+              <th class="r">Inv. Inicial</th><th class="r">Compra</th><th class="r">Demanda</th>
+              <th class="r">Inv. Final</th><th class="r">P. Reorden</th><th class="r">Stock Seg.</th>
+              <th class="r">Precio</th><th>Estado</th><th>Notas</th>
+              <th style="text-align:right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+        <div id="tbl-empty" class="empty">
+          <div class="empty-icon">📦</div>
+          <p>No hay SKUs para esta semana fiscal.<br>Agrega un SKU manualmente o importa desde Excel.</p>
+        </div>
+      </div>
+    </div><!-- /detail -->
+
+    <!-- ══ TAB LOB ══ -->
+    <div class="tab-panel" id="panel-lob">
+      <div class="lob-controls">
+        <label>Años en vista</label>
+        <div id="year-pills" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
+        <button class="btn btn-sec" style="padding:5px 11px;font-size:12px" onclick="openYearModal()">＋ Gestionar años</button>
+        <div style="width:1px;height:24px;background:var(--border);margin:0 6px;flex-shrink:0"></div>
+        <label>Buscar SKU</label>
+        <input type="text" id="lob-filter" placeholder="SKU o descripción…" style="width:180px" oninput="renderLob()">
+        <button class="btn btn-suc" style="margin-left:auto" onclick="exportLobExcel()">⬇ Exportar LOB</button>
+      </div>
+
+      <!-- LEGEND -->
+      <div class="lob-legend">
+        <div class="leg-item">
+          <div class="leg-dot" style="background:rgba(212,160,23,.35);border:1px solid #d4a017"></div>
+          <span>Punto de Reorden — reponer pronto</span>
+        </div>
+        <div class="leg-item">
+          <div class="leg-dot" style="background:rgba(192,57,43,.35);border:1px solid #c0392b"></div>
+          <span>Stock Crítico — por debajo del stock de seguridad</span>
+        </div>
+        <div class="leg-item">
+          <div class="leg-dot" style="background:rgba(39,174,96,.18);border:1px solid #27ae60"></div>
+          <span>Stock OK</span>
+        </div>
+        <span style="font-size:11px;color:var(--muted);margin-left:8px">✏ Haz clic en COMPRA o DEMANDA para editar · se recalcula en cascada →</span>
+      </div>
+
+      <div class="lob-outer" id="lob-outer">
+        <div id="lob-empty" class="empty" style="display:none">
+          <div class="empty-icon">📊</div>
+          <p>Sin datos. Agrega SKUs en la pestaña Detalle.</p>
+        </div>
+      </div>
+    </div><!-- /lob -->
+
+  </div>
+</div>
+
+<!-- MODAL: ADD/EDIT SKU -->
+<div class="overlay" id="m-sku">
+  <div class="modal">
+    <div class="modal-h" id="m-sku-title">AGREGAR SKU</div>
+    <input type="hidden" id="e-idx">
+    <div class="frow full"><div class="ff-"><label>SKU / Código *</label><input type="text" id="e-sku" placeholder="Ej. PRD-001"></div></div>
+    <div class="frow full"><div class="ff-"><label>Descripción *</label><input type="text" id="e-desc" placeholder="Nombre del producto"></div></div>
+    <div class="frow">
+      <div class="ff-"><label>Categoría</label><input type="text" id="e-cat" placeholder="Proteína, Mariscos…"></div>
+      <div class="ff-"><label>UOM</label><input type="text" id="e-uom" placeholder="KG, PZA, CAJA…"></div>
+    </div>
+    <div class="frow three">
+      <div class="ff-"><label>Inv. Inicial</label><input type="number" id="e-ini" placeholder="0" min="0"></div>
+      <div class="ff-"><label>Compra / Entrada</label><input type="number" id="e-comp" placeholder="0" min="0"></div>
+      <div class="ff-"><label>Demanda / Salida</label><input type="number" id="e-dem" placeholder="0" min="0"></div>
+    </div>
+    <div class="frow three">
+      <div class="ff-"><label>Punto de Reorden</label><input type="number" id="e-reorder" placeholder="0" min="0"></div>
+      <div class="ff-"><label>Stock de Seguridad</label><input type="number" id="e-safety" placeholder="0" min="0"></div>
+      <div class="ff-"><label>Precio Unitario ($)</label><input type="number" id="e-price" placeholder="0.00" min="0" step="0.01"></div>
+    </div>
+    <div class="frow full"><div class="ff-"><label>Notas</label><input type="text" id="e-notes" placeholder="Opcional"></div></div>
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-sku')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSku()">Guardar SKU</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: WEEKS -->
+<div class="overlay" id="m-weeks">
+  <div class="modal">
+    <div class="modal-h">GESTIONAR SEMANAS</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Agrega o elimina semanas fiscales. Al eliminar una semana con datos éstos se pierden.</p>
+    <div class="wk-list" id="wk-list"></div>
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
+      <div class="ff-" style="flex:1;min-width:110px"><label>Núm. Semana</label><input type="number" id="nw-num" placeholder="1–53" min="1" max="53"></div>
+      <div class="ff-" style="flex:2;min-width:150px"><label>Etiqueta (opcional)</label><input type="text" id="nw-lbl" placeholder="Ej. Semana 5 – Feb"></div>
+      <button class="btn btn-primary" onclick="addWeek()">Agregar</button>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn btn-sec" onclick="addDefaultWeeks(52)">+ S1–S52</button>
+      <button class="btn btn-sec" onclick="addDefaultWeeks(13)">+ S1–S13</button>
+    </div>
+    <div class="mfooter"><button class="btn btn-primary" onclick="closeModal('m-weeks')">Listo</button></div>
+  </div>
+</div>
+
+<!-- MODAL: IMPORT -->
+<div class="overlay" id="m-import">
+  <div class="modal">
+    <div class="modal-h">IMPORTAR DESDE EXCEL</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:8px">Columnas:</p>
+    <p style="font-size:12px;color:var(--accent);margin-bottom:14px;font-family:monospace;line-height:1.8">
+      SKU · Descripción · Categoría · UOM<br>Inv_Inicial · Compra · Demanda<br>Punto_Reorden · Stock_Seguridad · Precio · Notas
+    </p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+      Importar a <strong style="color:var(--text)">Semana <span id="imp-week-lbl">—</span></strong>.
+    </p>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('f-inp').click()">
+      <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4l4 4M4 20h16"/></svg>
+      <p>Haz clic o arrastra tu archivo <strong>.xlsx / .xls / .csv</strong></p>
+    </div>
+    <input type="file" id="f-inp" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(event)">
+    <div id="imp-prev" style="font-size:13px;color:var(--muted);margin-bottom:10px;min-height:18px"></div>
+    <a href="#" onclick="dlTemplate();return false" style="color:var(--accent);font-size:12px;text-decoration:none">⬇ Descargar plantilla</a>
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-import')">Cancelar</button>
+      <button class="btn btn-primary" id="imp-ok" onclick="confirmImport()" style="display:none">✔ Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: YEAR SELECTOR -->
+<div class="overlay" id="m-years">
+  <div class="modal" style="width:460px">
+    <div class="modal-h">AÑOS VISIBLES EN LOB</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px">
+      Selecciona uno o más años para verlos en la Vista LOB anual. Puedes comparar el año actual con años futuros en la misma tabla.
+    </p>
+    <div id="year-check-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;max-height:300px;overflow-y:auto"></div>
+    <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:6px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border)">
+      <div class="ff-" style="flex:1;min-width:110px">
+        <label>Agregar año personalizado</label>
+        <input type="number" id="new-year-inp" placeholder="Ej. 2027" min="2020" max="2040"
+          style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--ff);font-size:13px;padding:9px 12px;outline:none;width:100%">
+      </div>
+      <button class="btn btn-sec" onclick="addLobYear()">＋ Agregar</button>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-sec" onclick="closeModal('m-years')">Cancelar</button>
+      <button class="btn btn-primary" onclick="applyYears()">✔ Aplicar selección</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════
+const USERS = { usaber:'eusaber26' };
+const SK = 'suvePM_v6';
+let pendingRows = null;
+
+function defState(){return{weeks:[],data:{},curWeek:1,curYear:new Date().getFullYear(),lobYears:[new Date().getFullYear()]}}
+function loadSt(){
+  try{
+    // try new key first, then migrate from v5
+    const r=localStorage.getItem(SK);
+    if(r) return JSON.parse(r);
+    const old=localStorage.getItem('suvePM_v5');
+    if(old){ const s=JSON.parse(old); if(!s.lobYears) s.lobYears=[s.curYear||new Date().getFullYear()]; return s; }
+  }catch(e){}
+  return defState();
+}
+function saveSt(){localStorage.setItem(SK,JSON.stringify(st))}
+let st = loadSt();
+if(!st.weeks)   st.weeks=[];
+if(!st.lobYears||!st.lobYears.length) st.lobYears=[st.curYear||new Date().getFullYear()];
+
+// All 52 standard weeks always exist for LOB purposes
+function ensureAllWeeks(){
+  for(let i=1;i<=52;i++){
+    if(!st.weeks.find(w=>w.num===i)) st.weeks.push({num:i,lbl:`FW${i}`});
+  }
+  st.weeks.sort((a,b)=>a.num-b.num);
+}
+
+function wkey(w,y){return`W${y!==undefined?y:st.curYear}-${w!==undefined?w:st.curWeek}`}
+function getRows(w,y){const k=wkey(w,y);if(!st.data[k])st.data[k]=[];return st.data[k]}
+
+// CASCADE: propagate inv forward from startWeek through all 52 weeks.
+// Creates entries in subsequent weeks if they dont exist yet,
+// copying comp/dem/reorder/safety from the source row as defaults.
+function cascadeForward(sku, startWeek, year){
+  var allNums = [];
+  for(var z=1;z<=52;z++) allNums.push(z);
+  var startIdx = allNums.indexOf(startWeek);
+  if(startIdx<0) return;
+  var startRows = getRows(startWeek, year);
+  var srcRow = null;
+  for(var si=0;si<startRows.length;si++){ if(startRows[si].sku===sku){srcRow=startRows[si];break;} }
+  if(!srcRow) return;
+  var prevFin = (parseFloat(srcRow.invInicial)||0) + (parseFloat(srcRow.compra)||0) - (parseFloat(srcRow.demanda)||0);
+  for(var i=startIdx+1; i<allNums.length; i++){
+    var wnum = allNums[i];
+    var rows = getRows(wnum, year);
+    var idx = -1;
+    for(var j=0;j<rows.length;j++){ if(rows[j].sku===sku){idx=j;break;} }
+    if(idx>=0){
+      rows[idx].invInicial = prevFin;
+      prevFin = prevFin + (parseFloat(rows[idx].compra)||0) - (parseFloat(rows[idx].demanda)||0);
+    } else {
+      var newRow = {
+        sku: srcRow.sku, desc: srcRow.desc, cat: srcRow.cat, uom: srcRow.uom,
+        invInicial: prevFin,
+        compra:  parseFloat(srcRow.compra)||0,
+        demanda: parseFloat(srcRow.demanda)||0,
+        reorder: parseFloat(srcRow.reorder)||0,
+        safety:  parseFloat(srcRow.safety)||0,
+        price:   parseFloat(srcRow.price)||0,
+        notes:   srcRow.notes||''
+      };
+      rows.push(newRow);
+      prevFin = prevFin + newRow.compra - newRow.demanda;
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════════
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim();
+  const p=document.getElementById('l-pass').value;
+  if(USERS[u]&&USERS[u]===p){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('nav-u').textContent=u.toUpperCase();
+    sessionStorage.setItem('suve_u',u);
+    init();
+  }else{document.getElementById('lg-err').style.display='block'}
+}
+function doLogout(){
+  sessionStorage.removeItem('suve_u');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('l-user').value='';document.getElementById('l-pass').value='';
+  document.getElementById('lg-err').style.display='none';
+}
+document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('l-pass').focus()});
+window.addEventListener('DOMContentLoaded',()=>{
+  const u=sessionStorage.getItem('suve_u');
+  if(u&&USERS[u]){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('nav-u').textContent=u.toUpperCase();
+    init();
+  }
+});
+
+// ══════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='lob'){ renderYearPills(); renderLob(); }
+}
+
+// ══════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════
+function init(){
+  ensureAllWeeks();
+  if(!st.lobYears||!st.lobYears.length) st.lobYears=[st.curYear];
+  saveSt();
+  document.getElementById('y-sel').value=st.curYear;
+  populateWeekSel();
+  render();
+}
+function populateWeekSel(){
+  const sel=document.getElementById('w-sel');
+  const cur=parseInt(sel.value)||st.curWeek;
+  sel.innerHTML='';
+  [...st.weeks].sort((a,b)=>a.num-b.num).forEach(w=>{
+    const o=document.createElement('option');
+    o.value=w.num;o.textContent=w.lbl||`FW${w.num}`;
+    sel.appendChild(o);
+  });
+  const t=st.weeks.find(w=>w.num===cur)?cur:(st.weeks[0]?.num||1);
+  sel.value=t;st.curWeek=t;
+}
+function onWeekChange(){
+  st.curWeek=parseInt(document.getElementById('w-sel').value)||st.curWeek;
+  st.curYear=parseInt(document.getElementById('y-sel').value)||st.curYear;
+  saveSt();render();
+}
+
+// ══════════════════════════════════════════════════
+//  RENDER DETAIL
+// ══════════════════════════════════════════════════
+function render(){
+  const rows=getRows();
+  const tbody=document.getElementById('tbl-body');
+  const empty=document.getElementById('tbl-empty');
+  tbody.innerHTML='';
+  if(!rows.length){empty.style.display='block';renderStats([]);return}
+  empty.style.display='none';
+  rows.forEach((r,i)=>{
+    const ini=parseFloat(r.invInicial)||0,comp=parseFloat(r.compra)||0,dem=parseFloat(r.demanda)||0;
+    const fin=ini+comp-dem,ror=parseFloat(r.reorder)||0,saf=parseFloat(r.safety)||0;
+    const isCrit=saf>0&&fin<=saf,isLow=ror>0&&fin<=ror;
+    const estado=isCrit?'🔴 Crítico':isLow?'🟡 Reorden':'🟢 OK';
+    const fc=isCrit?'c-r c-low':isLow?'c-r c-warn-t':'c-r c-ok';
+    const pr=parseFloat(r.price)||0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td class="c-muted">${i+1}</td>
+      <td class="c-sku">${x(r.sku)}</td><td>${x(r.desc)}</td>
+      <td class="c-muted">${x(r.cat)}</td><td class="c-muted">${x(r.uom)}</td>
+      <td class="c-r">${n(ini)}</td>
+      <td class="c-r" style="color:#58d68d">${n(comp)}</td>
+      <td class="c-r" style="color:var(--accent)">${n(dem)}</td>
+      <td class="${fc}">${n(fin)}</td>
+      <td class="c-r c-muted">${n(ror)}</td><td class="c-r c-muted">${n(saf)}</td>
+      <td class="c-r c-muted">${pr>0?'$'+pr.toFixed(2):'—'}</td>
+      <td style="font-size:12px;white-space:nowrap">${estado}</td>
+      <td class="c-muted" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${x(r.notes)}">${x(r.notes)||'—'}</td>
+      <td><div class="actions-cell">
+        <button class="ibtn ibtn-e" title="Editar" onclick="editSku(${i})">✏</button>
+        <button class="ibtn ibtn-d" title="Eliminar" onclick="delSku(${i})">✕</button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+  renderStats(rows);
+}
+
+function renderStats(rows){
+  let tI=0,tC=0,tD=0,tF=0,cL=0,cCr=0;
+  rows.forEach(r=>{
+    const i=parseFloat(r.invInicial)||0,c=parseFloat(r.compra)||0,d=parseFloat(r.demanda)||0;
+    const f=i+c-d,ror=parseFloat(r.reorder)||0,saf=parseFloat(r.safety)||0;
+    tI+=i;tC+=c;tD+=d;tF+=f;
+    if(ror>0&&f<=ror)cL++;if(saf>0&&f<=saf)cCr++;
+  });
+  document.getElementById('stats-grid').innerHTML=`
+    <div class="stat c-blue"><div class="stat-lbl">SKUs Activos</div><div class="stat-val">${rows.length}</div></div>
+    <div class="stat"><div class="stat-lbl">Inv. Inicial</div><div class="stat-val">${kk(tI)}</div></div>
+    <div class="stat c-blue"><div class="stat-lbl">Compras</div><div class="stat-val">${kk(tC)}</div></div>
+    <div class="stat"><div class="stat-lbl">Demanda</div><div class="stat-val">${kk(tD)}</div></div>
+    <div class="stat c-green"><div class="stat-lbl">Inv. Final</div><div class="stat-val">${kk(tF)}</div></div>
+    <div class="stat c-warn"><div class="stat-lbl">En Reorden</div><div class="stat-val">${cL}</div></div>
+    <div class="stat c-red"><div class="stat-lbl">Críticos</div><div class="stat-val">${cCr}</div></div>`;
+}
+
+// ══════════════════════════════════════════════════
+//  LOB YEAR MANAGEMENT
+// ══════════════════════════════════════════════════
+function renderYearPills(){
+  const container = document.getElementById('year-pills');
+  container.innerHTML = '';
+  [...st.lobYears].sort((a,b)=>a-b).forEach(yr=>{
+    const pill = document.createElement('button');
+    pill.className = 'yr-pill on';
+    pill.innerHTML = `${yr} <span class="yr-rm" onclick="removeLobYear(${yr},event)">✕</span>`;
+    container.appendChild(pill);
+  });
+}
+
+function openYearModal(){
+  renderYearCheckList();
+  openModal('m-years');
+}
+
+function renderYearCheckList(){
+  const list = document.getElementById('year-check-list');
+  list.innerHTML='';
+  const allYears = new Set(st.lobYears);
+  Object.keys(st.data).forEach(k=>{
+    const m=k.match(/^W(\d+)-/);if(m) allYears.add(parseInt(m[1]));
+  });
+  const curY=new Date().getFullYear();
+  for(let y=curY-1;y<=curY+4;y++) allYears.add(y);
+  [...allYears].sort((a,b)=>a-b).forEach(yr=>{
+    const row=document.createElement('div');row.className='yr-chk-row';
+    const chkId=`ychk-${yr}`;
+    const checked=st.lobYears.includes(yr)?'checked':'';
+    row.innerHTML=`
+      <input type="checkbox" id="${chkId}" value="${yr}" ${checked}>
+      <label for="${chkId}">${yr}</label>`;
+    list.appendChild(row);
+  });
+}
+
+function addLobYear(){
+  const v=parseInt(document.getElementById('new-year-inp').value);
+  if(isNaN(v)||v<2020||v>2040){toast('Año inválido (2020-2040).',true);return;}
+  if(!st.lobYears.includes(v)){
+    st.lobYears.push(v);
+    st.lobYears.sort((a,b)=>a-b);
+    saveSt();
+  }
+  document.getElementById('new-year-inp').value='';
+  renderYearCheckList();
+  toast(`Año ${v} agregado.`);
+}
+
+function removeLobYear(yr, e, fromModal=false){
+  if(e) e.stopPropagation();
+  if(st.lobYears.length<=1){toast('Debe haber al menos un año seleccionado.',true);return;}
+  st.lobYears=st.lobYears.filter(y=>y!==yr);
+  saveSt();
+  if(!fromModal){ renderYearPills(); renderLob(); }
+  else renderYearCheckList();
+}
+
+function applyYears(){
+  const checks=document.querySelectorAll('#year-check-list input[type=checkbox]');
+  const selected=[];
+  checks.forEach(c=>{ if(c.checked) selected.push(parseInt(c.value)); });
+  if(!selected.length){toast('Selecciona al menos un año.',true);return;}
+  st.lobYears=selected.sort((a,b)=>a-b);
+  saveSt();
+  closeModal('m-years');
+  renderYearPills();
+  renderLob();
+}
+
+// ══════════════════════════════════════════════════
+//  LOB VIEW — MULTI-YEAR
+// ══════════════════════════════════════════════════
+function renderLob(){
+  const filter = (document.getElementById('lob-filter').value||'').toLowerCase();
+  const outer  = document.getElementById('lob-outer');
+  const emEl   = document.getElementById('lob-empty');
+
+  const years  = [...st.lobYears].sort((a,b)=>a-b);
+  const weeks  = Array.from({length:52},(_,i)=>i+1); // FW1-FW52
+
+  // gather all SKUs across all selected years
+  let skuMap={};
+  years.forEach(yr=>{
+    weeks.forEach(w=>{
+      (st.data[wkey(w,yr)]||[]).forEach(r=>{
+        if(!skuMap[r.sku]) skuMap[r.sku]={desc:r.desc,uom:r.uom,reorder:r.reorder,safety:r.safety};
+      });
+    });
+  });
+
+  let skuList=Object.keys(skuMap);
+  if(filter) skuList=skuList.filter(s=>s.toLowerCase().includes(filter)||(skuMap[s].desc||'').toLowerCase().includes(filter));
+
+  const old=outer.querySelector('table');if(old)old.remove();
+  if(!skuList.length){emEl.style.display='block';return;}
+  emEl.style.display='none';
+
+  let h='<table class="lob-tbl">';
+
+  // ── HEADER ROW 1: year groups → week columns ──
+  h+='<thead><tr>';
+  h+=`<th class="sk s0 hsk" style="z-index:6">SKU</th>`;
+  h+=`<th class="sk s1 hsk" style="z-index:6">Descripción</th>`;
+  h+=`<th class="sk s2 hsk" style="z-index:6;text-align:center">UOM</th>`;
+
+  years.forEach((yr,yi)=>{
+    weeks.forEach((w,wi)=>{
+      const isCur=(w===st.curWeek&&yr===st.curYear);
+      const wObj=st.weeks.find(wo=>wo.num===w);
+      const lbl=wObj?(wObj.lbl||`FW${w}`):`FW${w}`;
+      const isFirstOfYear=(wi===0);
+      // Year separator cell (only on first week of each year, merged as 1 col here in row1)
+      // We render each week header individually; year change gets a thick left border
+      const yrBorder=isFirstOfYear?'border-left:3px solid var(--accent);':'';
+      h+=`<th class="wk-th${isCur?' cur':''}" colspan="4" style="${yrBorder}">`;
+      if(isFirstOfYear) h+=`<span style="font-size:9px;color:var(--accent);letter-spacing:1px;margin-right:4px">${yr} ·</span>`;
+      h+=lbl+'</th>';
+    });
+  });
+  h+='</tr>';
+
+  // ── HEADER ROW 2: metric sub-headers ──
+  h+='<tr>';
+  h+=`<th class="sk s0 hsk2" style="z-index:6"></th>`;
+  h+=`<th class="sk s1 hsk2" style="z-index:6"></th>`;
+  h+=`<th class="sk s2 hsk2" style="z-index:6"></th>`;
+  years.forEach(yr=>{
+    weeks.forEach((w,wi)=>{
+      const yrBorder=(wi===0)?'border-left:3px solid var(--accent);':'';
+      h+=`<th class="m-th ini" style="${yrBorder}">INI</th>`;
+      h+=`<th class="m-th comp">COMPRA</th>`;
+      h+=`<th class="m-th dem">DEMANDA</th>`;
+      h+=`<th class="m-th fin">INV FIN</th>`;
+    });
+  });
+  h+='</tr></thead>';
+
+  // ── BODY ──
+  h+='<tbody>';
+  // totals: totals[yr][w] = {ini,comp,dem,fin}
+  const totals={};
+  years.forEach(yr=>{totals[yr]={};weeks.forEach(w=>{totals[yr][w]={ini:0,comp:0,dem:0,fin:0}});});
+
+  skuList.forEach(sku=>{
+    const info=skuMap[sku];
+    h+=`<tr data-sku="${x(sku)}">`;
+    h+=`<td class="sk s0 td-sku" title="${x(sku)}">${x(sku)}</td>`;
+    h+=`<td class="sk s1 td-desc" title="${x(info.desc)}">${x(info.desc)}</td>`;
+    h+=`<td class="sk s2 td-uom">${x(info.uom||'')}</td>`;
+
+    years.forEach(yr=>{
+      weeks.forEach((w,wi)=>{
+        const wRows=st.data[wkey(w,yr)]||[];
+        const r=wRows.find(r=>r.sku===sku);
+        const ini  = r?(parseFloat(r.invInicial)||0):null;
+        const comp = r?(parseFloat(r.compra)||0):null;
+        const dem  = r?(parseFloat(r.demanda)||0):null;
+        const fin  = r!=null?(ini+comp-dem):null;
+        const ror  = r?(parseFloat(r.reorder)||0):(parseFloat(info.reorder)||0);
+        const saf  = r?(parseFloat(r.safety)||0):(parseFloat(info.safety)||0);
+        if(r){totals[yr][w].ini+=ini;totals[yr][w].comp+=comp;totals[yr][w].dem+=dem;totals[yr][w].fin+=fin;}
+
+        const yrBorder=(wi===0)?'wk-first':'';
+        const yrStyle=(wi===0)?'border-left:3px solid var(--accent);':'';
+
+        if(ini===null){
+          h+=`<td class="dc ini mt ${yrBorder}" style="${yrStyle}"><span>—</span></td>`;
+          h+=`<td class="dc comp mt"><span>—</span></td>`;
+          h+=`<td class="dc dem mt"><span>—</span></td>`;
+          h+=`<td class="dc fin mt"><span>—</span></td>`;
+        } else {
+          h+=`<td class="dc ini ${yrBorder}" style="${yrStyle}"><span>${n(ini)}</span></td>`;
+          h+=`<td class="dc comp editable" data-field="comp" data-sku="${x(sku)}" data-week="${w}" data-year="${yr}"><span>${n(comp)}</span></td>`;
+          h+=`<td class="dc dem editable" data-field="dem" data-sku="${x(sku)}" data-week="${w}" data-year="${yr}"><span>${n(dem)}</span></td>`;
+          let stCls='st-ok';
+          if(saf>0&&fin<=saf) stCls='st-crit';
+          else if(ror>0&&fin<=ror) stCls='st-warn';
+          h+=`<td class="dc fin ${stCls}"><span>${n(fin)}</span></td>`;
+        }
+      });
+    });
+    h+='</tr>';
+  });
+
+  // TOTALS ROW
+  h+='<tr class="sum-row">';
+  h+=`<td class="sk s0 td-sku">TOTALES</td>`;
+  h+=`<td class="sk s1 td-desc"></td>`;
+  h+=`<td class="sk s2 td-uom"></td>`;
+  years.forEach(yr=>{
+    weeks.forEach((w,wi)=>{
+      const t=totals[yr][w];
+      const yrBorder=(wi===0)?'wk-first':'';
+      const yrStyle=(wi===0)?'border-left:3px solid var(--accent);':'';
+      h+=`<td class="dc ini ${yrBorder}" style="${yrStyle}"><span>${n(t.ini)}</span></td>`;
+      h+=`<td class="dc comp"><span>${n(t.comp)}</span></td>`;
+      h+=`<td class="dc dem"><span>${n(t.dem)}</span></td>`;
+      h+=`<td class="dc fin"><span>${n(t.fin)}</span></td>`;
+    });
+  });
+  h+='</tr>';
+  h+='</tbody></table>';
+
+  outer.insertAdjacentHTML('afterbegin',h);
+
+  // Attach click-to-edit on editable cells
+  outer.querySelectorAll('.dc.editable').forEach(cell=>{
+    cell.addEventListener('click',function(){ if(!this.querySelector('input')) startCellEdit(this); });
+  });
+}
+
+// ── INLINE CELL EDITING ──
+function startCellEdit(cell){
+  const field = cell.dataset.field;
+  const sku   = cell.dataset.sku;
+  const week  = parseInt(cell.dataset.week);
+  const year  = parseInt(cell.dataset.year);
+
+  const rows = getRows(week, year);
+  const r    = rows.find(r=>r.sku===sku);
+  if(!r) return;
+
+  const curVal = field==='comp' ? (parseFloat(r.compra)||0) : (parseFloat(r.demanda)||0);
+
+  const span = cell.querySelector('span');
+  span.style.display='none';
+
+  const inp = document.createElement('input');
+  inp.className='cell-inp';
+  inp.type='number';
+  inp.min='0';
+  inp.value=curVal;
+  cell.appendChild(inp);
+  inp.focus();
+  inp.select();
+
+  function commit(){
+    const newVal = Math.max(0, parseFloat(inp.value)||0);
+    if(field==='comp') r.compra   = newVal;
+    else               r.demanda  = newVal;
+
+    // cascade forward
+    cascadeForward(sku, week, year);
+    saveSt();
+
+    // refresh lob
+    renderLob();
+
+    // if detail tab is on same week/year, refresh it
+    if(week===st.curWeek && year===st.curYear) render();
+  }
+
+  inp.addEventListener('blur', commit);
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ e.preventDefault(); inp.blur(); }
+    if(e.key==='Escape'){
+      inp.removeEventListener('blur', commit);
+      inp.remove();
+      span.style.display='';
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════
+//  SKU CRUD
+// ══════════════════════════════════════════════════
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='m-weeks') renderWkList();
+  if(id==='m-import') updateImpLbl();
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='m-sku') clearForm();
+  if(id==='m-weeks'){ populateWeekSel(); refreshLobIfVisible(); }
+}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+
+function clearForm(){
+  ['e-sku','e-desc','e-cat','e-uom','e-ini','e-comp','e-dem','e-reorder','e-safety','e-price','e-notes']
+    .forEach(id=>document.getElementById(id).value='');
+  document.getElementById('e-idx').value='';
+  document.getElementById('m-sku-title').textContent='AGREGAR SKU';
+}
+
+function saveSku(){
+  const sku  = document.getElementById('e-sku').value.trim();
+  const desc = document.getElementById('e-desc').value.trim();
+  if(!sku||!desc){toast('SKU y Descripción son requeridos.',true);return}
+  const row={
+    sku,desc,
+    cat:document.getElementById('e-cat').value.trim(),
+    uom:document.getElementById('e-uom').value.trim(),
+    invInicial:parseFloat(document.getElementById('e-ini').value)||0,
+    compra:    parseFloat(document.getElementById('e-comp').value)||0,
+    demanda:   parseFloat(document.getElementById('e-dem').value)||0,
+    reorder:   parseFloat(document.getElementById('e-reorder').value)||0,
+    safety:    parseFloat(document.getElementById('e-safety').value)||0,
+    price:     parseFloat(document.getElementById('e-price').value)||0,
+    notes:     document.getElementById('e-notes').value.trim()
+  };
+  const rows=getRows();
+  const idx=document.getElementById('e-idx').value;
+  if(idx!==''){
+    rows[parseInt(idx)]=row;
+    cascadeForward(sku, st.curWeek, st.curYear);
+    toast('SKU actualizado.');
+  } else {
+    rows.push(row);
+    cascadeForward(sku, st.curWeek, st.curYear);
+    toast('SKU agregado.');
+  }
+  saveSt();render();refreshLobIfVisible();closeModal('m-sku');
+}
+
+function editSku(i){
+  const r=getRows()[i];if(!r)return;
+  document.getElementById('e-idx').value=i;
+  document.getElementById('m-sku-title').textContent='EDITAR SKU';
+  document.getElementById('e-sku').value   =r.sku||'';
+  document.getElementById('e-desc').value  =r.desc||'';
+  document.getElementById('e-cat').value   =r.cat||'';
+  document.getElementById('e-uom').value   =r.uom||'';
+  document.getElementById('e-ini').value   =r.invInicial||0;
+  document.getElementById('e-comp').value  =r.compra||0;
+  document.getElementById('e-dem').value   =r.demanda||0;
+  document.getElementById('e-reorder').value=r.reorder||0;
+  document.getElementById('e-safety').value=r.safety||0;
+  document.getElementById('e-price').value =r.price||0;
+  document.getElementById('e-notes').value =r.notes||'';
+  openModal('m-sku');
+}
+
+function delSku(i){
+  if(!confirm('¿Eliminar este SKU de la semana actual?'))return;
+  getRows().splice(i,1);saveSt();render();toast('SKU eliminado.');
+}
+function confirmClearAll(){
+  if(!confirm('¿Borrar TODOS los datos de TODAS las semanas?'))return;
+  st.data={};saveSt();render();toast('Datos borrados.');
+}
+
+// ══════════════════════════════════════════════════
+//  WEEK MANAGEMENT
+// ══════════════════════════════════════════════════
+function renderWkList(){
+  const list=document.getElementById('wk-list');list.innerHTML='';
+  [...st.weeks].sort((a,b)=>a.num-b.num).forEach(w=>{
+    const d=document.createElement('div');d.className='wk-item';
+    const cnt=(st.data[wkey(w.num,st.curYear)]||[]).length;
+    d.innerHTML=`<span>${w.lbl||`FW${w.num}`} <span style="color:var(--muted);font-size:11px">(${cnt} SKUs)</span></span>
+      <button class="wk-del" onclick="removeWeek(${w.num})">✕</button>`;
+    list.appendChild(d);
+  });
+}
+function refreshLobIfVisible(){
+  if(document.getElementById('panel-lob').classList.contains('active')){
+    renderYearPills(); renderLob();
+  }
+}
+function addWeek(){
+  const num=parseInt(document.getElementById('nw-num').value);
+  const lbl=document.getElementById('nw-lbl').value.trim();
+  if(isNaN(num)||num<1||num>53){toast('Semana inválida (1-53).',true);return}
+  if(st.weeks.find(w=>w.num===num)){toast('Esa semana ya existe.',true);return}
+  st.weeks.push({num,lbl:lbl||`FW${num}`});
+  st.weeks.sort((a,b)=>a.num-b.num);
+  saveSt();renderWkList();populateWeekSel();refreshLobIfVisible();
+  document.getElementById('nw-num').value='';document.getElementById('nw-lbl').value='';
+  toast(`FW${num} agregada.`);
+}
+function removeWeek(num){
+  const k=wkey(num,st.curYear);
+  const has=(st.data[k]||[]).length>0;
+  if(has&&!confirm(`FW${num} tiene datos. ¿Eliminar?`))return;
+  st.weeks=st.weeks.filter(w=>w.num!==num);
+  saveSt();renderWkList();populateWeekSel();render();refreshLobIfVisible();toast(`FW${num} eliminada.`);
+}
+function addDefaultWeeks(max){
+  for(let i=1;i<=max;i++){if(!st.weeks.find(w=>w.num===i))st.weeks.push({num:i,lbl:`FW${i}`})}
+  st.weeks.sort((a,b)=>a.num-b.num);
+  saveSt();renderWkList();populateWeekSel();refreshLobIfVisible();toast(`FW1–FW${max} agregadas.`);
+}
+
+// ══════════════════════════════════════════════════
+//  IMPORT
+// ══════════════════════════════════════════════════
+function updateImpLbl(){
+  const w=st.weeks.find(w=>w.num===st.curWeek);
+  const el=document.getElementById('imp-week-lbl');
+  if(el) el.textContent=`${w?(w.lbl||`FW${w.num}`):`FW${st.curWeek}`} / ${st.curYear}`;
+}
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('on')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('on'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('on');const f=e.dataTransfer.files[0];if(f)procFile(f)});
+function handleFile(e){const f=e.target.files[0];if(f)procFile(f);e.target.value=''}
+const CM={
+  sku:['SKU','sku','Sku','CODIGO','Codigo'],
+  desc:['Descripción','Descripcion','descripcion','DESC','Nombre','nombre','NOMBRE'],
+  cat:['Categoría','Categoria','categoria','CAT'],
+  uom:['UOM','uom','Unidad','UNIDAD','UM'],
+  invInicial:['Inv_Inicial','InvInicial','inv_inicial','INV_INICIAL','Inventario_Inicial','Inicial'],
+  compra:['Compra','COMPRA','compra','Compras','Entrada'],
+  demanda:['Demanda','DEMANDA','demanda','Salida'],
+  reorder:['Punto_Reorden','PuntoReorden','PUNTO_REORDEN','Reorden','P_Reorden'],
+  safety:['Stock_Seguridad','StockSeguridad','STOCK_SEGURIDAD','Seguridad'],
+  price:['Precio','PRECIO','precio','Price'],
+  notes:['Notas','NOTAS','notas','Observaciones']
+};
+function fv(row,al){for(const a of al){if(row[a]!==undefined)return row[a]}return''}
+function procFile(file){
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      const rows=raw.map(r=>({
+        sku:String(fv(r,CM.sku)||'').trim(),desc:String(fv(r,CM.desc)||'').trim(),
+        cat:String(fv(r,CM.cat)||'').trim(),uom:String(fv(r,CM.uom)||'').trim(),
+        invInicial:parseFloat(fv(r,CM.invInicial))||0,compra:parseFloat(fv(r,CM.compra))||0,
+        demanda:parseFloat(fv(r,CM.demanda))||0,reorder:parseFloat(fv(r,CM.reorder))||0,
+        safety:parseFloat(fv(r,CM.safety))||0,price:parseFloat(fv(r,CM.price))||0,
+        notes:String(fv(r,CM.notes)||'').trim()
+      })).filter(r=>r.sku||r.desc);
+      if(!rows.length){toast('Sin filas válidas.',true);return}
+      pendingRows=rows;
+      document.getElementById('imp-prev').innerHTML=`<span style="color:#5dbb85">✔ ${rows.length} producto(s) listos.</span>`;
+      document.getElementById('imp-ok').style.display='inline-flex';
+    }catch(e){toast('Error leyendo el archivo.',true)}
+  };
+  r.readAsArrayBuffer(file);
+}
+function confirmImport(){
+  if(!pendingRows)return;
+  const rows=getRows();
+  pendingRows.forEach(r=>{
+    rows.push(r);
+    cascadeForward(r.sku, st.curWeek, st.curYear);
+  });
+  saveSt();render();refreshLobIfVisible();pendingRows=null;
+  document.getElementById('imp-prev').innerHTML='';
+  document.getElementById('imp-ok').style.display='none';
+  closeModal('m-import');toast('Importación completada.');
+}
+function dlTemplate(){
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['SKU','Descripción','Categoría','UOM','Inv_Inicial','Compra','Demanda','Punto_Reorden','Stock_Seguridad','Precio','Notas'],
+    ['PRD-001','Salmon Lomo Premium','Mariscos','KG',120,80,90,20,10,145.50,'Camanchaca'],
+    ['PRD-002','Camarón Mediano','Mariscos','KG',200,100,180,30,15,220.00,''],
+    ['PRD-003','Tilapia Filete','Proteína','KG',80,60,70,15,8,95.00,'Congelado']
+  ]);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Inventario');
+  XLSX.writeFile(wb,'Plantilla_Compras_SuvePM.xlsx');
+}
+
+// ══════════════════════════════════════════════════
+//  EXPORT
+// ══════════════════════════════════════════════════
+function exportExcel(){
+  const wb=XLSX.utils.book_new();let has=false;
+  [...st.weeks].sort((a,b)=>a.num-b.num).forEach(w=>{
+    const rows=st.data[wkey(w.num,st.curYear)]||[];if(!rows.length)return;
+    has=true;
+    const data=[['SKU','Descripción','Categoría','UOM','Inv_Inicial','Compra','Demanda','Inv_Final','Punto_Reorden','Stock_Seguridad','Precio','Notas','Estado']];
+    rows.forEach(r=>{
+      const fin=(parseFloat(r.invInicial)||0)+(parseFloat(r.compra)||0)-(parseFloat(r.demanda)||0);
+      const est=parseFloat(r.safety)>0&&fin<=parseFloat(r.safety)?'Crítico':parseFloat(r.reorder)>0&&fin<=parseFloat(r.reorder)?'Reorden':'OK';
+      data.push([r.sku,r.desc,r.cat,r.uom,r.invInicial,r.compra,r.demanda,fin,r.reorder,r.safety,r.price,r.notes,est]);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(data),(w.lbl||`FW${w.num}`).substring(0,31));
+  });
+  if(!has){toast('No hay datos.',true);return}
+  XLSX.writeFile(wb,`ComprasSuvePM_${st.curYear}.xlsx`);toast('Exportado.');
+}
+
+function exportLobExcel(){
+  const years=[...st.lobYears].sort((a,b)=>a-b);
+  const weeks=Array.from({length:52},(_,i)=>i+1);
+  let skuMap={};
+  years.forEach(yr=>{weeks.forEach(w=>{(st.data[wkey(w,yr)]||[]).forEach(r=>{if(!skuMap[r.sku])skuMap[r.sku]={desc:r.desc,uom:r.uom}})})});
+  const skus=Object.keys(skuMap);
+  if(!skus.length){toast('Sin datos.',true);return;}
+
+  const h1=['SKU','Descripción','UOM'];
+  const h2=['','',''];
+  years.forEach(yr=>{
+    weeks.forEach((w,wi)=>{
+      const wObj=st.weeks.find(wo=>wo.num===w);
+      const lbl=wObj?(wObj.lbl||`FW${w}`):`FW${w}`;
+      h1.push(wi===0?`${yr} – ${lbl}`:lbl,'','','');
+      h2.push('INI','COMPRA','DEMANDA','INV FIN');
+    });
+  });
+  const data=[h1,h2];
+  skus.forEach(sku=>{
+    const row=[sku,skuMap[sku].desc,skuMap[sku].uom];
+    years.forEach(yr=>{
+      weeks.forEach(w=>{
+        const r=(st.data[wkey(w,yr)]||[]).find(r=>r.sku===sku);
+        const ini=r?parseFloat(r.invInicial)||0:'';
+        const comp=r?parseFloat(r.compra)||0:'';
+        const dem=r?parseFloat(r.demanda)||0:'';
+        const fin=r?(ini+comp-dem):'';
+        row.push(ini,comp,dem,fin);
+      });
+    });
+    data.push(row);
+  });
+  const ws=XLSX.utils.aoa_to_sheet(data);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'LOB');
+  XLSX.writeFile(wb,`LOB_SuvePM_${years.join('-')}.xlsx`);toast('LOB exportado.');
+}
+
+// ══════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════
+function n(v){
+  const num=parseFloat(v)||0;
+  if(Number.isInteger(num)) return num.toLocaleString('es-MX');
+  return num.toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:1});
+}
+function kk(v){return Math.abs(v)>=1e6?(v/1e6).toFixed(1)+'M':Math.abs(v)>=1e3?(v/1e3).toFixed(1)+'K':v.toFixed(0)}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+let _tt;
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='show'+(err?' err':'');
+  clearTimeout(_tt);_tt=setTimeout(()=>{t.className=''},3200);
+}
+</script>
+</body>
+</html>

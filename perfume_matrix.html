@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AromaSensei — Perfume Creation Matrix</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0b08;
+    --surface: #16120d;
+    --surface2: #1f1a12;
+    --border: #2e2618;
+    --gold: #c9a84c;
+    --gold2: #e8cc80;
+    --cream: #f0e8d5;
+    --muted: #6e6048;
+    --accent: #8b5e3c;
+    --green: #4a7c59;
+    --amber: #c97c2a;
+    --text: #d4c5a9;
+    --r0: #1f1a12;
+    --r1: #2a2415;
+    --r2: #3d3218;
+    --r3: #c9a84c22;
+    --c0: #555;
+    --c1: #4a7c59;
+    --c2: #c97c2a;
+    --c3: #c9a84c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    background: linear-gradient(180deg, #1a140d 0%, var(--bg) 100%);
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+  }
+  .logo span { font-style: italic; color: var(--gold2); }
+  .tagline {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* LAYOUT */
+  .app { display: grid; grid-template-columns: 1fr 340px; height: calc(100vh - 65px); }
+
+  /* LEFT PANEL */
+  .left-panel { overflow-y: auto; padding: 20px 24px; border-right: 1px solid var(--border); }
+
+  /* RIGHT PANEL */
+  .right-panel { overflow-y: auto; background: var(--surface); display: flex; flex-direction: column; }
+
+  /* SECTIONS */
+  .section-title {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* CONTROLS BAR */
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  select, input[type="text"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 2px;
+    outline: none;
+    transition: border 0.2s;
+  }
+  select:focus, input:focus { border-color: var(--gold); }
+
+  button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  button:hover { border-color: var(--gold); color: var(--gold); }
+  button.primary {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: #0d0b08;
+    font-weight: 400;
+  }
+  button.primary:hover { background: var(--gold2); border-color: var(--gold2); }
+  button.active { border-color: var(--gold); color: var(--gold); background: var(--r3); }
+
+  /* MATRIX TABLE */
+  .matrix-wrap { overflow-x: auto; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 10.5px;
+  }
+
+  thead th {
+    background: var(--surface2);
+    color: var(--gold);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    padding: 8px 6px;
+    text-align: center;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    font-size: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  thead th:first-child {
+    text-align: left;
+    min-width: 150px;
+    left: 0;
+    z-index: 3;
+    background: var(--surface2);
+  }
+
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface2); }
+
+  tbody td {
+    border: 1px solid var(--border);
+    padding: 5px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  tbody td:first-child {
+    text-align: left;
+    color: var(--cream);
+    font-size: 11px;
+    position: sticky;
+    left: 0;
+    background: var(--bg);
+    z-index: 1;
+    padding-left: 10px;
+  }
+  tbody tr:hover td:first-child { background: var(--surface2); }
+
+  /* Compatibility dots */
+  .dot {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 9px;
+    line-height: 18px;
+    font-weight: 400;
+    transition: transform 0.15s;
+  }
+  .dot:hover { transform: scale(1.3); }
+  .dot-0 { background: var(--r0); color: #333; }
+  .dot-1 { background: var(--r1); color: var(--muted); border: 1px solid #3d3218; }
+  .dot-2 { background: var(--r2); color: #a89060; border: 1px solid #6e5020; }
+  .dot-3 { background: var(--gold); color: #0d0b08; }
+
+  /* Row/col highlight */
+  td.col-hl { background: #1a1608 !important; }
+  td.row-hl { background: #1a1608 !important; }
+  td.both-hl { background: var(--r3) !important; }
+  tr.dimmed { opacity: 0.3; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* IDEA GENERATOR — right panel */
+  .idea-section {
+    padding: 18px 18px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .idea-input-wrap { display: flex; gap: 6px; margin-top: 8px; }
+  .idea-input-wrap input { flex: 1; }
+
+  .family-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+  }
+  .pill {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .pill:hover, .pill.active { border-color: var(--gold); color: var(--gold); background: var(--r3); }
+
+  /* FORMULA OUTPUT */
+  .formula-section {
+    padding: 16px 18px;
+    flex: 1;
+  }
+
+  .formula-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px;
+    min-height: 100px;
+    color: var(--cream);
+    line-height: 1.8;
+  }
+  .formula-box.empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+  }
+
+  .f-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  .f-row {
+    display: grid;
+    grid-template-columns: 1fr 50px 70px;
+    gap: 4px;
+    font-size: 10.5px;
+    padding: 2px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .f-row:last-child { border-bottom: none; }
+  .f-material { color: var(--cream); }
+  .f-pct { text-align: right; color: var(--amber); }
+  .f-dil { text-align: right; color: var(--muted); font-size: 9px; }
+  .f-total {
+    margin-top: 10px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--gold);
+    border-top: 1px solid var(--gold);
+    padding-top: 4px;
+  }
+  .f-tips {
+    margin-top: 10px;
+    padding: 10px;
+    background: var(--surface2);
+    border-left: 2px solid var(--gold);
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .f-tips b { color: var(--text); }
+  .f-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-style: italic;
+    color: var(--gold2);
+    margin-bottom: 10px;
+  }
+
+  /* IMPORT SECTION */
+  .import-section {
+    padding: 12px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .import-section label {
+    cursor: pointer;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .import-section label:hover { border-color: var(--gold); color: var(--gold); }
+  .import-section input[type="file"] { display: none; }
+  #import-status { font-size: 10px; color: var(--green); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* FILTER ACTIVE indicator */
+  .filter-badge {
+    font-size: 9px;
+    background: var(--gold);
+    color: #0d0b08;
+    border-radius: 10px;
+    padding: 1px 6px;
+    margin-left: 4px;
+    display: none;
+  }
+  .filter-badge.show { display: inline; }
+
+  /* Note type badge */
+  .note-type {
+    font-size: 8px;
+    color: var(--muted);
+    margin-left: 4px;
+  }
+
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; grid-template-rows: auto auto; height: auto; }
+    .right-panel { border-top: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Aroma<span>Sensei</span></div>
+  <div class="tagline">Perfume Creation Matrix · Fragrance Formulation Tool</div>
+</header>
+
+<div class="app">
+  <!-- LEFT: MATRIX -->
+  <div class="left-panel">
+    <div class="section-title">
+      Compatibility Matrix
+      <span class="filter-badge" id="filter-badge">FILTERED</span>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+      <select id="filter-family" title="Filter by family">
+        <option value="">All Families</option>
+      </select>
+      <select id="filter-material" title="Filter by material">
+        <option value="">All Materials</option>
+      </select>
+      <select id="filter-min" title="Min compatibility">
+        <option value="0">Score ≥ 0</option>
+        <option value="1">Score ≥ 1</option>
+        <option value="2">Score ≥ 2</option>
+        <option value="3">Core only (3)</option>
+      </select>
+      <button onclick="clearFilters()">Clear</button>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="legend-item"><span class="dot dot-0">0</span> Not typical</div>
+      <div class="legend-item"><span class="dot dot-1">1</span> Occasional</div>
+      <div class="legend-item"><span class="dot dot-2">2</span> Common</div>
+      <div class="legend-item"><span class="dot dot-3">3</span> Core material</div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="matrix-wrap">
+      <table id="matrix-table"></table>
+    </div>
+  </div>
+
+  <!-- RIGHT: GENERATOR -->
+  <div class="right-panel">
+    <!-- IDEA INPUT -->
+    <div class="idea-section">
+      <div class="section-title">Formula Generator</div>
+      <div class="idea-input-wrap">
+        <input type="text" id="idea-input" placeholder="e.g. fresh citrus office fragrance…" />
+        <button class="primary" onclick="generateFormula()">→</button>
+      </div>
+      <div class="family-pills" id="family-pills"></div>
+    </div>
+
+    <!-- FORMULA OUTPUT -->
+    <div class="formula-section">
+      <div class="section-title">Formula Output</div>
+      <div class="formula-box empty" id="formula-output">
+        Type an idea or select a family to generate a formula…
+      </div>
+    </div>
+
+    <!-- IMPORT -->
+    <div class="import-section">
+      <label for="excel-import">⬆ Import Excel</label>
+      <input type="file" id="excel-import" accept=".xlsx,.xls" onchange="importExcel(event)">
+      <span id="import-status"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════
+
+const FAMILIES = [
+  "Citrus","Floral","Woody","Amber","Oriental","Fougère","Chypre","Gourmand","Fresh/Aquatic","Leather","Aromatic"
+];
+
+// noteType: T=top, H=heart, B=base, TB=top-base, HB=heart-base
+let MATERIALS = [
+  { name:"Bergamot",        note:"T",  dilution:"neat" },
+  { name:"Lemon",           note:"T",  dilution:"neat" },
+  { name:"Grapefruit",      note:"T",  dilution:"neat" },
+  { name:"Lavender",        note:"T",  dilution:"neat" },
+  { name:"Geranium",        note:"H",  dilution:"neat" },
+  { name:"Rose Absolute",   note:"H",  dilution:"neat" },
+  { name:"Jasmine Absolute",note:"H",  dilution:"neat" },
+  { name:"Ylang-Ylang",     note:"H",  dilution:"neat" },
+  { name:"Hedione",         note:"H",  dilution:"10%" },
+  { name:"Iso E Super",     note:"HB", dilution:"10%" },
+  { name:"Ambroxan",        note:"B",  dilution:"10%" },
+  { name:"Cashmeran",       note:"B",  dilution:"10%" },
+  { name:"Cedarwood",       note:"B",  dilution:"neat" },
+  { name:"Sandalwood",      note:"B",  dilution:"neat" },
+  { name:"Patchouli",       note:"B",  dilution:"neat" },
+  { name:"Vetiver",         note:"B",  dilution:"neat" },
+  { name:"Tonka Bean",      note:"B",  dilution:"neat" },
+  { name:"Vanillin",        note:"B",  dilution:"10%" },
+  { name:"Ethyl Maltol",    note:"B",  dilution:"10%" },
+  { name:"Coumarin",        note:"HB", dilution:"10%" },
+  { name:"Labdanum",        note:"B",  dilution:"neat" },
+  { name:"Benzoin",         note:"B",  dilution:"neat" },
+  { name:"Musk (clean)",    note:"B",  dilution:"10%" },
+  { name:"Galaxolide",      note:"B",  dilution:"50%" },
+  { name:"Oakmoss",         note:"HB", dilution:"10%" },
+  { name:"Aldehyde C10",    note:"T",  dilution:"1%"  },
+  { name:"Aldehyde C11",    note:"T",  dilution:"1%"  },
+  { name:"Aldehyde C12",    note:"TH", dilution:"1%"  },
+];
+
+// Matrix: rows=materials, cols=families  [Citrus,Floral,Woody,Amber,Oriental,Fougère,Chypre,Gourmand,Fresh/Aquatic,Leather,Aromatic]
+let MATRIX = [
+//              Cit  Flo  Woo  Amb  Ori  Fou  Chy  Gou  Frs  Lea  Aro
+/*Bergamot*/    [3,   2,   2,   1,   1,   3,   3,   1,   3,   2,   3],
+/*Lemon*/       [3,   1,   1,   0,   0,   2,   2,   1,   3,   1,   2],
+/*Grapefruit*/  [3,   1,   1,   0,   0,   2,   2,   1,   3,   1,   2],
+/*Lavender*/    [2,   2,   2,   1,   1,   3,   2,   1,   2,   1,   3],
+/*Geranium*/    [1,   2,   1,   1,   1,   2,   3,   0,   1,   2,   2],
+/*Rose*/        [1,   3,   1,   2,   2,   1,   3,   2,   1,   2,   1],
+/*Jasmine*/     [1,   3,   1,   2,   2,   2,   3,   1,   1,   2,   1],
+/*Ylang*/       [0,   2,   1,   2,   3,   1,   1,   1,   0,   1,   0],
+/*Hedione*/     [2,   3,   1,   1,   1,   2,   2,   1,   2,   1,   1],
+/*Iso E Super*/ [1,   1,   3,   2,   2,   2,   2,   1,   1,   2,   2],
+/*Ambroxan*/    [1,   1,   2,   3,   3,   1,   1,   1,   2,   2,   1],
+/*Cashmeran*/   [0,   1,   2,   3,   2,   1,   1,   2,   0,   1,   1],
+/*Cedarwood*/   [1,   1,   3,   2,   2,   2,   2,   1,   1,   2,   2],
+/*Sandalwood*/  [0,   2,   3,   3,   3,   1,   2,   2,   0,   1,   1],
+/*Patchouli*/   [0,   1,   2,   3,   3,   1,   3,   2,   0,   3,   1],
+/*Vetiver*/     [0,   0,   3,   2,   2,   1,   2,   0,   1,   3,   1],
+/*Tonka Bean*/  [0,   1,   1,   3,   2,   2,   2,   3,   0,   1,   2],
+/*Vanillin*/    [0,   1,   0,   3,   3,   0,   0,   3,   0,   1,   0],
+/*Ethyl Maltol*/[0,   0,   0,   2,   2,   0,   0,   3,   0,   0,   0],
+/*Coumarin*/    [1,   1,   1,   2,   2,   3,   1,   2,   1,   1,   2],
+/*Labdanum*/    [0,   0,   1,   3,   3,   1,   2,   1,   0,   3,   0],
+/*Benzoin*/     [0,   1,   1,   3,   3,   0,   1,   2,   0,   2,   0],
+/*Musk (clean)*/[2,   2,   2,   2,   2,   2,   2,   2,   2,   1,   2],
+/*Galaxolide*/  [1,   2,   2,   1,   1,   2,   2,   1,   2,   1,   1],
+/*Oakmoss*/     [0,   0,   1,   1,   1,   2,   3,   0,   0,   2,   1],
+/*Ald C10*/     [2,   1,   1,   1,   1,   1,   2,   0,   2,   1,   1],
+/*Ald C11*/     [1,   2,   1,   1,   1,   1,   2,   0,   1,   1,   1],
+/*Ald C12*/     [1,   3,   1,   1,   1,   1,   2,   0,   0,   1,   0],
+];
+
+// Formula templates per family
+const FORMULAS = {
+  "Citrus": {
+    idea: "Sparkling Citrus — bright, uplifting, clean",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:20, dil:"neat"},
+      {m:"Lemon",          note:"T", pct:15, dil:"neat"},
+      {m:"Grapefruit",     note:"T", pct:10, dil:"neat"},
+      {m:"Aldehyde C10",   note:"T", pct:1,  dil:"1%"},
+      {m:"Lavender",       note:"H", pct:12, dil:"neat"},
+      {m:"Hedione",        note:"H", pct:8,  dil:"10%"},
+      {m:"Geranium",       note:"H", pct:5,  dil:"neat"},
+      {m:"Cedarwood",      note:"B", pct:10, dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:12, dil:"10%"},
+      {m:"Galaxolide",     note:"B", pct:5,  dil:"50%"},
+      {m:"Ambroxan",       note:"B", pct:2,  dil:"10%"},
+    ],
+    tips:["Fix citrus with a cedarwood or musk base — they evaporate quickly alone","Keep aldehydes below 1–2% or they dominate","Hedione boosts transparency and diffusion"]
+  },
+  "Floral": {
+    idea: "Luminous Floral Bouquet — feminine, radiant, elegant",
+    notes: [
+      {m:"Aldehyde C12",   note:"T", pct:2,  dil:"1%"},
+      {m:"Bergamot",       note:"T", pct:10, dil:"neat"},
+      {m:"Rose Absolute",  note:"H", pct:18, dil:"neat"},
+      {m:"Jasmine Absolute",note:"H",pct:15, dil:"neat"},
+      {m:"Ylang-Ylang",    note:"H", pct:5,  dil:"neat"},
+      {m:"Hedione",        note:"H", pct:10, dil:"10%"},
+      {m:"Geranium",       note:"H", pct:5,  dil:"neat"},
+      {m:"Sandalwood",     note:"B", pct:10, dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:12, dil:"10%"},
+      {m:"Benzoin",        note:"B", pct:5,  dil:"neat"},
+      {m:"Ambroxan",       note:"B", pct:3,  dil:"10%"},
+      {m:"Tonka Bean",     note:"B", pct:5,  dil:"neat"},
+    ],
+    tips:["Aldehydes lift florals — use sparingly (1–2%)","Hedione + Jasmine creates a magnolia-like radiance","Rose Absolute is expensive; Geranium can support volume"]
+  },
+  "Woody": {
+    idea: "Dark Vetiver Wood — dry, earthy, sophisticated",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:12, dil:"neat"},
+      {m:"Iso E Super",    note:"T", pct:8,  dil:"10%"},
+      {m:"Geranium",       note:"H", pct:6,  dil:"neat"},
+      {m:"Oakmoss",        note:"H", pct:4,  dil:"10%"},
+      {m:"Cedarwood",      note:"B", pct:18, dil:"neat"},
+      {m:"Vetiver",        note:"B", pct:15, dil:"neat"},
+      {m:"Sandalwood",     note:"B", pct:12, dil:"neat"},
+      {m:"Patchouli",      note:"B", pct:8,  dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:10, dil:"10%"},
+      {m:"Ambroxan",       note:"B", pct:4,  dil:"10%"},
+      {m:"Labdanum",       note:"B", pct:3,  dil:"neat"},
+    ],
+    tips:["Iso E Super at 5–10% adds diffusive woody cedar abstraction","Vetiver is smoky-earthy — balance with Sandalwood","Let woody bases macerate 4+ weeks before evaluation"]
+  },
+  "Amber": {
+    idea: "Golden Amber Resin — warm, enveloping, sensual",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:8,  dil:"neat"},
+      {m:"Lavender",       note:"T", pct:5,  dil:"neat"},
+      {m:"Ylang-Ylang",    note:"H", pct:5,  dil:"neat"},
+      {m:"Rose Absolute",  note:"H", pct:6,  dil:"neat"},
+      {m:"Coumarin",       note:"HB",pct:8,  dil:"10%"},
+      {m:"Tonka Bean",     note:"B", pct:12, dil:"neat"},
+      {m:"Labdanum",       note:"B", pct:10, dil:"neat"},
+      {m:"Benzoin",        note:"B", pct:8,  dil:"neat"},
+      {m:"Vanillin",       note:"B", pct:8,  dil:"10%"},
+      {m:"Sandalwood",     note:"B", pct:10, dil:"neat"},
+      {m:"Ambroxan",       note:"B", pct:6,  dil:"10%"},
+      {m:"Cashmeran",      note:"B", pct:6,  dil:"10%"},
+      {m:"Musk (clean)",   note:"B", pct:8,  dil:"10%"},
+    ],
+    tips:["Ambroxan + Labdanum is the classic amber signature","Add Tonka + Benzoin for a sweet resinous depth","Warm ambers perform best at EDP concentration (18–20%)"]
+  },
+  "Oriental": {
+    idea: "Opulent Oriental — rich, spiced, mysterious",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:6,  dil:"neat"},
+      {m:"Ylang-Ylang",    note:"H", pct:6,  dil:"neat"},
+      {m:"Jasmine Absolute",note:"H",pct:8,  dil:"neat"},
+      {m:"Rose Absolute",  note:"H", pct:5,  dil:"neat"},
+      {m:"Patchouli",      note:"B", pct:10, dil:"neat"},
+      {m:"Labdanum",       note:"B", pct:10, dil:"neat"},
+      {m:"Sandalwood",     note:"B", pct:10, dil:"neat"},
+      {m:"Vanillin",       note:"B", pct:8,  dil:"10%"},
+      {m:"Benzoin",        note:"B", pct:8,  dil:"neat"},
+      {m:"Tonka Bean",     note:"B", pct:8,  dil:"neat"},
+      {m:"Ambroxan",       note:"B", pct:6,  dil:"10%"},
+      {m:"Cashmeran",      note:"B", pct:5,  dil:"10%"},
+      {m:"Musk (clean)",   note:"B", pct:6,  dil:"10%"},
+      {m:"Vetiver",        note:"B", pct:4,  dil:"neat"},
+    ],
+    tips:["Oriental accords require long maceration — minimum 6 weeks","Patchouli + Labdanum anchors the oriental character","Vanilla should not exceed 8% or it turns gourmand"]
+  },
+  "Fougère": {
+    idea: "Classic Fougère — lavender, coumarin, oakmoss",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:15, dil:"neat"},
+      {m:"Lavender",       note:"T", pct:20, dil:"neat"},
+      {m:"Geranium",       note:"H", pct:8,  dil:"neat"},
+      {m:"Hedione",        note:"H", pct:5,  dil:"10%"},
+      {m:"Coumarin",       note:"HB",pct:12, dil:"10%"},
+      {m:"Oakmoss",        note:"HB",pct:4,  dil:"10%"},
+      {m:"Cedarwood",      note:"B", pct:8,  dil:"neat"},
+      {m:"Tonka Bean",     note:"B", pct:6,  dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:10, dil:"10%"},
+      {m:"Vetiver",        note:"B", pct:4,  dil:"neat"},
+      {m:"Ambroxan",       note:"B", pct:3,  dil:"10%"},
+      {m:"Iso E Super",    note:"B", pct:5,  dil:"10%"},
+    ],
+    tips:["The Fougère triad: Lavender + Coumarin + Oakmoss","Coumarin has IFRA limits — check before scaling up","Bergamot anchors the citrus freshness of the top notes"]
+  },
+  "Chypre": {
+    idea: "Mossy Chypre — oakmoss, bergamot, labdanum",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:15, dil:"neat"},
+      {m:"Aldehyde C10",   note:"T", pct:1,  dil:"1%"},
+      {m:"Rose Absolute",  note:"H", pct:12, dil:"neat"},
+      {m:"Jasmine Absolute",note:"H",pct:8,  dil:"neat"},
+      {m:"Geranium",       note:"H", pct:6,  dil:"neat"},
+      {m:"Oakmoss",        note:"HB",pct:8,  dil:"10%"},
+      {m:"Labdanum",       note:"B", pct:12, dil:"neat"},
+      {m:"Patchouli",      note:"B", pct:6,  dil:"neat"},
+      {m:"Vetiver",        note:"B", pct:5,  dil:"neat"},
+      {m:"Cedarwood",      note:"B", pct:8,  dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:10, dil:"10%"},
+      {m:"Galaxolide",     note:"B", pct:5,  dil:"50%"},
+      {m:"Tonka Bean",     note:"B", pct:4,  dil:"neat"},
+    ],
+    tips:["Classical Chypre = Bergamot top + Floral heart + Oakmoss/Labdanum base","Oakmoss is IFRA-restricted — use with IFRA-compliant substitutes","This family benefits from slow-diffusing musks for longevity"]
+  },
+  "Gourmand": {
+    idea: "Sweet Gourmand — caramel, vanilla, coumarin",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:8,  dil:"neat"},
+      {m:"Lavender",       note:"T", pct:6,  dil:"neat"},
+      {m:"Tonka Bean",     note:"H", pct:12, dil:"neat"},
+      {m:"Coumarin",       note:"HB",pct:8,  dil:"10%"},
+      {m:"Hedione",        note:"H", pct:5,  dil:"10%"},
+      {m:"Vanillin",       note:"B", pct:14, dil:"10%"},
+      {m:"Ethyl Maltol",   note:"B", pct:8,  dil:"10%"},
+      {m:"Benzoin",        note:"B", pct:8,  dil:"neat"},
+      {m:"Cashmeran",      note:"B", pct:6,  dil:"10%"},
+      {m:"Sandalwood",     note:"B", pct:8,  dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:12, dil:"10%"},
+      {m:"Ambroxan",       note:"B", pct:5,  dil:"10%"},
+    ],
+    tips:["Ethyl Maltol creates caramel/candy effect — max 10%","Coumarin boosts almond-praline tonality","Balance sweetness with clean musks to avoid cloying effect"]
+  },
+  "Fresh/Aquatic": {
+    idea: "Marine Aquatic — sea air, ozonic, crisp",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:15, dil:"neat"},
+      {m:"Grapefruit",     note:"T", pct:12, dil:"neat"},
+      {m:"Lemon",          note:"T", pct:10, dil:"neat"},
+      {m:"Lavender",       note:"H", pct:10, dil:"neat"},
+      {m:"Hedione",        note:"H", pct:10, dil:"10%"},
+      {m:"Geranium",       note:"H", pct:5,  dil:"neat"},
+      {m:"Iso E Super",    note:"HB",pct:5,  dil:"10%"},
+      {m:"Cedarwood",      note:"B", pct:8,  dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:14, dil:"10%"},
+      {m:"Galaxolide",     note:"B", pct:5,  dil:"50%"},
+      {m:"Ambroxan",       note:"B", pct:6,  dil:"10%"},
+    ],
+    tips:["Use Ambroxan for aquatic amber drydown — synthetic sea air","Hedione opens the top notes and creates white-space transparency","Keep this family light (EDT 8–12%) for best effect"]
+  },
+  "Leather": {
+    idea: "Smoky Leather — birch tar, vetiver, tobacco-esque",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:8,  dil:"neat"},
+      {m:"Lavender",       note:"T", pct:6,  dil:"neat"},
+      {m:"Geranium",       note:"H", pct:6,  dil:"neat"},
+      {m:"Rose Absolute",  note:"H", pct:6,  dil:"neat"},
+      {m:"Iso E Super",    note:"HB",pct:8,  dil:"10%"},
+      {m:"Oakmoss",        note:"HB",pct:5,  dil:"10%"},
+      {m:"Vetiver",        note:"B", pct:14, dil:"neat"},
+      {m:"Patchouli",      note:"B", pct:10, dil:"neat"},
+      {m:"Labdanum",       note:"B", pct:10, dil:"neat"},
+      {m:"Cedarwood",      note:"B", pct:8,  dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:10, dil:"10%"},
+      {m:"Ambroxan",       note:"B", pct:5,  dil:"10%"},
+      {m:"Cashmeran",      note:"B", pct:4,  dil:"10%"},
+    ],
+    tips:["Vetiver + Iso E Super creates a dry, smoky leather feel","Patchouli anchors leather accords with earthy depth","Layer rose/jasmine for classic leather-floral (cuir de russie style)"]
+  },
+  "Aromatic": {
+    idea: "Mediterranean Aromatic — herbs, clean, masculine",
+    notes: [
+      {m:"Bergamot",       note:"T", pct:12, dil:"neat"},
+      {m:"Lemon",          note:"T", pct:8,  dil:"neat"},
+      {m:"Lavender",       note:"T", pct:18, dil:"neat"},
+      {m:"Geranium",       note:"H", pct:8,  dil:"neat"},
+      {m:"Hedione",        note:"H", pct:6,  dil:"10%"},
+      {m:"Iso E Super",    note:"HB",pct:8,  dil:"10%"},
+      {m:"Coumarin",       note:"HB",pct:6,  dil:"10%"},
+      {m:"Cedarwood",      note:"B", pct:10, dil:"neat"},
+      {m:"Vetiver",        note:"B", pct:5,  dil:"neat"},
+      {m:"Musk (clean)",   note:"B", pct:10, dil:"10%"},
+      {m:"Tonka Bean",     note:"B", pct:5,  dil:"neat"},
+      {m:"Ambroxan",       note:"B", pct:4,  dil:"10%"},
+    ],
+    tips:["Lavender is the backbone of aromatic frags — don't skimp","Coumarin adds a sweet herbal warmth bridging top to base","Iso E Super gives a transparent woody diffusion to the whole"]
+  }
+};
+
+// ═══════════════════════════════════════════════
+// RENDER MATRIX
+// ═══════════════════════════════════════════════
+
+let activeFamily = null;
+let activeMaterial = null;
+
+function buildTable() {
+  const table = document.getElementById('matrix-table');
+  const minScore = parseInt(document.getElementById('filter-min').value);
+  const familyFilter = document.getElementById('filter-family').value;
+  const materialFilter = document.getElementById('filter-material').value;
+
+  const famIdx = familyFilter ? FAMILIES.indexOf(familyFilter) : -1;
+  const matIdx = materialFilter ? MATERIALS.findIndex(m => m.name === materialFilter) : -1;
+
+  // Header
+  let html = '<thead><tr><th>Material / Family</th>';
+  FAMILIES.forEach((f, fi) => {
+    const hl = (famIdx === fi) ? ' style="color:var(--gold2);background:var(--surface);"' : '';
+    html += `<th${hl}>${f}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  MATERIALS.forEach((mat, ri) => {
+    // Filter by min score in selected family
+    if (famIdx >= 0 && MATRIX[ri][famIdx] < minScore) return;
+    // Filter by material
+    if (matIdx >= 0 && ri !== matIdx && minScore > 0) {
+      // show materials that score >= minScore in families where matIdx also scores
+      const qualFamilies = FAMILIES.map((_, fi) => fi).filter(fi => MATRIX[matIdx][fi] >= minScore);
+      const anyMatch = qualFamilies.some(fi => MATRIX[ri][fi] >= minScore);
+      if (!anyMatch) return;
+    }
+
+    const rowHl = (matIdx === ri);
+    html += `<tr class="${rowHl ? '' : (matIdx >= 0 ? 'dimmed' : '')}">`;
+    html += `<td class="${rowHl ? 'row-hl' : ''}" onclick="clickMaterial('${mat.name}')">${mat.name} <span class="note-type">${mat.note}</span></td>`;
+    FAMILIES.forEach((f, fi) => {
+      const score = MATRIX[ri][fi];
+      if (famIdx >= 0 && score < minScore) {
+        html += `<td class="col-hl"><span class="dot dot-0">—</span></td>`;
+        return;
+      }
+      const colHl = famIdx === fi;
+      const bothHl = colHl && rowHl;
+      html += `<td class="${bothHl ? 'both-hl' : colHl ? 'col-hl' : rowHl ? 'row-hl' : ''}" onclick="clickCell('${mat.name}','${f}',${ri},${fi})">`;
+      html += `<span class="dot dot-${score}">${score}</span></td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody>';
+  table.innerHTML = html;
+  updateBadge();
+}
+
+function clickCell(mat, fam, ri, fi) {
+  document.getElementById('idea-input').value = `${mat} in a ${fam} fragrance`;
+  document.getElementById('filter-family').value = fam;
+  document.getElementById('filter-material').value = mat;
+  buildTable();
+  generateFormula();
+}
+
+function clickMaterial(name) {
+  document.getElementById('filter-material').value = name;
+  buildTable();
+}
+
+function clearFilters() {
+  document.getElementById('filter-family').value = '';
+  document.getElementById('filter-material').value = '';
+  document.getElementById('filter-min').value = '0';
+  activeFamily = null;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  buildTable();
+}
+
+function updateBadge() {
+  const f = document.getElementById('filter-family').value;
+  const m = document.getElementById('filter-material').value;
+  const s = document.getElementById('filter-min').value;
+  const badge = document.getElementById('filter-badge');
+  badge.classList.toggle('show', f || m || s > 0);
+}
+
+// ═══════════════════════════════════════════════
+// POPULATE SELECTS & PILLS
+// ═══════════════════════════════════════════════
+
+function populateControls() {
+  const famSel = document.getElementById('filter-family');
+  const matSel = document.getElementById('filter-material');
+  const pillsDiv = document.getElementById('family-pills');
+
+  famSel.innerHTML = '<option value="">All Families</option>';
+  FAMILIES.forEach(f => famSel.innerHTML += `<option value="${f}">${f}</option>`);
+
+  matSel.innerHTML = '<option value="">All Materials</option>';
+  MATERIALS.forEach(m => matSel.innerHTML += `<option value="${m.name}">${m.name}</option>`);
+
+  pillsDiv.innerHTML = '';
+  FAMILIES.forEach(f => {
+    const p = document.createElement('span');
+    p.className = 'pill';
+    p.textContent = f;
+    p.onclick = () => {
+      document.querySelectorAll('.pill').forEach(x => x.classList.remove('active'));
+      p.classList.add('active');
+      document.getElementById('idea-input').value = '';
+      document.getElementById('filter-family').value = f;
+      buildTable();
+      generateFormulaForFamily(f);
+    };
+    pillsDiv.appendChild(p);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// FORMULA GENERATOR
+// ═══════════════════════════════════════════════
+
+function generateFormulaForFamily(family) {
+  const data = FORMULAS[family];
+  if (!data) return;
+  renderFormula(family, data.idea, data.notes, data.tips);
+}
+
+function generateFormula() {
+  const input = document.getElementById('idea-input').value.toLowerCase().trim();
+  const familyFilter = document.getElementById('filter-family').value;
+
+  // If family filter is set, use that
+  if (familyFilter && FORMULAS[familyFilter]) {
+    generateFormulaForFamily(familyFilter);
+    return;
+  }
+
+  // Parse keywords from input
+  const keyMap = {
+    citrus:['citrus','lemon','bergamot','orange','fresh lemon','zesty','lime','grapefruit'],
+    floral:['floral','flower','rose','jasmine','bouquet','feminine','lily','bloom'],
+    woody:['woody','wood','cedar','vetiver','forest','tree','earthy'],
+    amber:['amber','resin','warm','golden','sandalwood','dry warm'],
+    oriental:['oriental','exotic','spice','opulent','oud','rich'],
+    fougère:['fougère','fougere','lavender','moss','classic','masculine','aromatic herb'],
+    chypre:['chypre','mossy','oak','oakmoss'],
+    gourmand:['gourmand','sweet','vanilla','candy','caramel','food','dessert','sugar','chocolate'],
+    'fresh/aquatic':['fresh','aquatic','marine','ocean','sea','water','clean','office','light','day'],
+    leather:['leather','smoky','tobacco','dark','rugged'],
+    aromatic:['aromatic','herbal','herb','mediterranean','sage','thyme','mint']
+  };
+
+  let bestFamily = null;
+  let bestScore = 0;
+  for (const [fam, keywords] of Object.entries(keyMap)) {
+    const score = keywords.filter(kw => input.includes(kw)).length;
+    if (score > bestScore) { bestScore = score; bestFamily = fam; }
+  }
+
+  if (!bestFamily) {
+    // Default: fresh/aquatic for "office", woody for dark, floral for feminine
+    if (input.includes('office') || input.includes('work')) bestFamily = 'fresh/aquatic';
+    else if (input.includes('night') || input.includes('evening')) bestFamily = 'oriental';
+    else if (input.includes('summer') || input.includes('spring')) bestFamily = 'citrus';
+    else if (input.includes('winter') || input.includes('cold')) bestFamily = 'amber';
+    else bestFamily = 'fresh/aquatic';
+  }
+
+  // Find matching family key
+  const famKey = Object.keys(FORMULAS).find(k => k.toLowerCase() === bestFamily.toLowerCase()) || Object.keys(FORMULAS)[0];
+  const data = FORMULAS[famKey];
+  renderFormula(famKey, `${input ? '"' + capitalizeFirst(input) + '"' : ''} — ${data.idea}`, data.notes, data.tips);
+
+  // Sync selects
+  const famSel = document.getElementById('filter-family');
+  const matchingOpt = [...famSel.options].find(o => o.value.toLowerCase() === famKey.toLowerCase());
+  if (matchingOpt) { famSel.value = matchingOpt.value; buildTable(); }
+}
+
+function renderFormula(family, title, notes, tips) {
+  const top = notes.filter(n => n.note.includes('T'));
+  const heart = notes.filter(n => n.note === 'H' || n.note === 'HB' || n.note === 'TH');
+  const base = notes.filter(n => n.note === 'B' || n.note === 'HB' || n.note === 'TB');
+  const total = notes.reduce((s, n) => s + n.pct, 0);
+
+  let html = `<div class="f-title">✦ ${family} — ${title}</div>`;
+
+  const renderSection = (label, items) => {
+    if (!items.length) return '';
+    let s = `<div class="f-label">${label}</div>`;
+    items.forEach(n => {
+      s += `<div class="f-row"><span class="f-material">${n.m}</span><span class="f-pct">${n.pct}%</span><span class="f-dil">${n.dil}</span></div>`;
+    });
+    return s;
+  };
+
+  html += renderSection('▲ Top Notes', top);
+  html += renderSection('◆ Heart Notes', heart);
+  html += renderSection('● Base Notes', base);
+  html += `<div class="f-total">TOTAL = ${total}% concentrate · Dilute to 18–20% EDP in ethanol</div>`;
+  html += `<div class="f-tips"><b>Tips:</b><br>` + tips.map(t => `• ${t}`).join('<br>') + '</div>';
+
+  const box = document.getElementById('formula-output');
+  box.classList.remove('empty');
+  box.innerHTML = html;
+}
+
+function capitalizeFirst(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// ═══════════════════════════════════════════════
+// EXCEL IMPORT
+// ═══════════════════════════════════════════════
+
+function importExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const status = document.getElementById('import-status');
+  status.textContent = 'Reading…';
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+      if (data.length < 2) { status.textContent = '✗ Empty sheet'; return; }
+
+      // Expected: Row 0 = headers (first col = "Material", rest = family names)
+      // Col 0 = material name, Col 1 = note type, Col 2 = dilution, Col 3+ = scores per family
+      const headers = data[0].slice(3);
+      const newFamilies = headers.filter(Boolean);
+      const newMaterials = [];
+      const newMatrix = [];
+
+      data.slice(1).forEach(row => {
+        if (!row[0]) return;
+        newMaterials.push({ name: String(row[0]), note: String(row[1] || 'H'), dilution: String(row[2] || 'neat') });
+        const scores = newFamilies.map((_, i) => parseInt(row[3 + i]) || 0);
+        newMatrix.push(scores);
+      });
+
+      if (newFamilies.length && newMaterials.length) {
+        FAMILIES.length = 0; newFamilies.forEach(f => FAMILIES.push(f));
+        MATERIALS.length = 0; newMaterials.forEach(m => MATERIALS.push(m));
+        MATRIX.length = 0; newMatrix.forEach(r => MATRIX.push(r));
+        populateControls();
+        buildTable();
+        status.textContent = `✓ ${newMaterials.length} materials, ${newFamilies.length} families`;
+      } else {
+        status.textContent = '✗ Check format: col0=Material, col1=Note, col2=Dilution, col3+=scores';
+      }
+    } catch(err) {
+      status.textContent = '✗ Error: ' + err.message;
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ═══════════════════════════════════════════════
+// EVENT LISTENERS
+// ═══════════════════════════════════════════════
+
+document.getElementById('filter-family').addEventListener('change', buildTable);
+document.getElementById('filter-material').addEventListener('change', buildTable);
+document.getElementById('filter-min').addEventListener('change', buildTable);
+document.getElementById('idea-input').addEventListener('keydown', e => { if (e.key === 'Enter') generateFormula(); });
+
+// INIT
+populateControls();
+buildTable();
+</script>
+</body>
+</html>

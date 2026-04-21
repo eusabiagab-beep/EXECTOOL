@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXECTOOL</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f0f2f5;
+  --bg2:#e8eaf0;
+  --surface:#ffffff;
+  --surface2:#f8f9fb;
+  --surface3:#f1f3f7;
+  --border:#e2e5ec;
+  --border2:#cbd0d9;
+  --primary:#4f46e5;
+  --primary-dark:#4338ca;
+  --primary-light:#eef2ff;
+  --primary-glow:rgba(79,70,229,.16);
+  --primary-glow2:rgba(79,70,229,.08);
+  --danger:#ef4444;
+  --danger-bg:#fef2f2;
+  --success:#10b981;
+  --success-bg:#f0fdf4;
+  --warn:#f59e0b;
+  --warn-bg:#fffbeb;
+  --text:#0f172a;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --sidebar-bg:#0f172a;
+  --sidebar-surface:rgba(255,255,255,.03);
+  --sidebar-border:rgba(255,255,255,.06);
+  --sidebar-hover:rgba(255,255,255,.06);
+  --sidebar-active-bg:rgba(99,102,241,.18);
+  --sidebar-active:#818cf8;
+  --radius:12px;
+  --radius2:16px;
+  --radius3:8px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.05);
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 20px rgba(0,0,0,.06);
+  --shadow2:0 4px 6px rgba(0,0,0,.05),0 10px 40px rgba(0,0,0,.1);
+  --shadow3:0 20px 60px rgba(0,0,0,.12);
+  --transition:.2s cubic-bezier(.4,0,.2,1);
+  --transition-slow:.35s cubic-bezier(.4,0,.2,1);
+  --sp1:4px;--sp2:8px;--sp3:12px;--sp4:16px;--sp5:20px;--sp6:24px;--sp8:32px;--sp10:40px;
+}
+[data-theme=dark]{
+  --bg:#0b0f19;
+  --bg2:#0f172a;
+  --surface:#131c2e;
+  --surface2:#1a2540;
+  --surface3:#1e2d4a;
+  --border:#1e293b;
+  --border2:#2d3f5c;
+  --text:#e2e8f0;
+  --text2:#94a3b8;
+  --text3:#475569;
+  --primary-light:rgba(79,70,229,.15);
+  --primary-glow:rgba(99,102,241,.25);
+  --primary-glow2:rgba(99,102,241,.1);
+  --danger-bg:rgba(239,68,68,.12);
+  --success-bg:rgba(16,185,129,.12);
+  --warn-bg:rgba(245,158,11,.12);
+  --shadow:0 1px 3px rgba(0,0,0,.3),0 4px 20px rgba(0,0,0,.3);
+  --shadow2:0 4px 6px rgba(0,0,0,.2),0 10px 40px rgba(0,0,0,.4);
+  --shadow3:0 20px 60px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;display:flex;flex-direction:column;height:100vh;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;transition:background var(--transition-slow),color var(--transition-slow)}
+/* TOPBAR */
+#topbar{display:none;background:var(--sidebar-bg);color:#fff;padding:0 16px;height:56px;align-items:center;justify-content:space-between;flex-shrink:0;z-index:50;border-bottom:1px solid var(--sidebar-border)}
+#topbar-title{font-size:16px;font-weight:800;letter-spacing:.06em;background:linear-gradient(135deg,#a5b4fc,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#hamburger{background:none;border:none;color:#64748b;font-size:22px;cursor:pointer;padding:6px;border-radius:6px;transition:color var(--transition)}
+#hamburger:hover{color:#fff}
+/* LAYOUT */
+#app-body{display:flex;flex:1;overflow:hidden}
+#sidebar{width:228px;min-width:228px;background:var(--sidebar-bg);color:#64748b;display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;transition:transform .3s cubic-bezier(.4,0,.2,1);border-right:1px solid var(--sidebar-border)}
+#sidebar::-webkit-scrollbar{width:3px}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+#sidebar h3{padding:22px 18px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sidebar-border)}
+#sidebar h3 .logo-text{font-size:15px;font-weight:800;letter-spacing:.1em;background:linear-gradient(135deg,#a5b4fc,#6366f1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#sidebar h3 .logo-icon{font-size:20px;filter:drop-shadow(0 0 8px rgba(99,102,241,.6))}
+.nav-section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#334155;padding:18px 18px 6px}
+.nav-item{padding:9px 12px;cursor:pointer;transition:all var(--transition);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;border-radius:var(--radius3);margin:1px 10px;color:#64748b;-webkit-tap-highlight-color:transparent;position:relative}
+.nav-item:hover{background:var(--sidebar-hover);color:#cbd5e1}
+.nav-item.active{background:var(--sidebar-active-bg);color:var(--sidebar-active);font-weight:600;box-shadow:0 0 0 1px rgba(99,102,241,.2)}
+.nav-item.active .icon{filter:drop-shadow(0 0 6px rgba(129,140,248,.6))}
+.nav-item .icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;transition:filter var(--transition)}
+.nav-item.logout{color:#f87171}
+.nav-item.logout:hover{background:rgba(239,68,68,.1);color:#fca5a5}
+.sidebar-bottom{margin-top:auto;padding:var(--sp3) 10px;border-top:1px solid var(--sidebar-border)}
+.sidebar-user{font-size:11px;font-weight:700;color:#334155;padding:6px 14px 10px;text-transform:uppercase;letter-spacing:.08em;display:flex;align-items:center;gap:6px}
+#sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:49;backdrop-filter:blur(4px)}
+/* MAIN */
+#main{flex:1;overflow-y:auto;padding:var(--sp8);-webkit-overflow-scrolling:touch;background:var(--bg);transition:background var(--transition-slow)}
+#main::-webkit-scrollbar{width:6px}
+#main::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+h2{margin-bottom:22px;font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.02em}
+h3{margin:14px 0 10px;font-size:15px;font-weight:600;color:var(--text)}
+/* CARDS */
+.card{background:var(--surface);border-radius:var(--radius2);padding:var(--sp6);margin-bottom:var(--sp4);box-shadow:var(--shadow);border:1px solid var(--border);transition:box-shadow var(--transition),transform var(--transition)}
+.card:hover{box-shadow:var(--shadow2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:var(--sp4)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp4)}
+/* KPI STATS */
+.stat{background:var(--surface);border-radius:var(--radius2);padding:var(--sp6) var(--sp8);box-shadow:var(--shadow);border:1px solid var(--border);text-align:center;transition:all var(--transition);cursor:default;position:relative;overflow:hidden}
+.stat::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--primary-glow2),transparent);opacity:0;transition:opacity var(--transition)}
+.stat:hover{box-shadow:var(--shadow2);transform:translateY(-2px)}
+.stat:hover::before{opacity:1}
+.stat .num{font-size:36px;font-weight:800;color:var(--primary);line-height:1;letter-spacing:-.02em;margin-bottom:4px}
+.stat .lbl{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+/* TABLES */
+.table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius2);box-shadow:var(--shadow);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--surface);min-width:480px}
+th{background:var(--surface2);color:var(--text3);padding:11px 16px;text-align:left;font-size:11px;font-weight:700;white-space:nowrap;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+td{padding:13px 16px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:13px;color:var(--text);transition:background var(--transition)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--primary-glow2)}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.01em}
+.badge.alta{background:var(--danger-bg);color:#dc2626}
+.badge.media{background:var(--warn-bg);color:#d97706}
+.badge.baja{background:var(--success-bg);color:#16a34a}
+.badge.pendiente{background:var(--primary-light);color:#4338ca}
+.badge.completado{background:var(--success-bg);color:#16a34a}
+.badge.urgente{background:var(--danger-bg);color:#dc2626;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--radius3);border:none;cursor:pointer;font-size:13px;font-weight:600;font-family:'Inter',sans-serif;transition:all var(--transition);-webkit-tap-highlight-color:transparent;touch-action:manipulation;letter-spacing:.01em;position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.1);opacity:0;transition:opacity var(--transition)}
+.btn:hover::after{opacity:1}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;box-shadow:0 2px 8px rgba(79,70,229,.35)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(79,70,229,.45)}
+.btn-primary:active{transform:none}
+.btn-secondary{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid #fecaca}
+.btn-danger:hover{background:#fee2e2;transform:translateY(-1px)}
+.btn-green{background:var(--success-bg);color:#16a34a;border:1px solid #bbf7d0}
+.btn-green:hover{background:#dcfce7;transform:translateY(-1px)}
+.btn-sm{padding:6px 12px;font-size:12px}
+/* TOOLBAR */
+.toolbar{display:flex;gap:var(--sp2);margin-bottom:var(--sp5);flex-wrap:wrap;align-items:center}
+/* FORMS */
+.form-group{margin-bottom:var(--sp4)}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em}
+input[type=text],input[type=number],input[type=date],input[type=datetime-local],input[type=email],input[type=tel],select,textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border2);border-radius:var(--radius3);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color var(--transition),box-shadow var(--transition),background var(--transition);background:var(--surface);color:var(--text);-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+/* MODAL */
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;align-items:flex-end;justify-content:center;backdrop-filter:blur(6px)}
+#overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:24px 24px 0 0;padding:28px 24px 36px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;box-shadow:0 -12px 60px rgba(0,0,0,.2);border-top:1px solid var(--border);animation:slideUp .3s cubic-bezier(.4,0,.2,1)}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.modal h3{margin-bottom:20px;font-size:18px;font-weight:700;color:var(--text)}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;padding-top:16px;border-top:1px solid var(--border)}
+/* CONFIRM */
+#confirmBox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+#confirmBox.open{display:flex}
+.confirm-inner{background:var(--surface);border-radius:var(--radius2);padding:var(--sp8) var(--sp6);width:100%;max-width:340px;text-align:center;box-shadow:var(--shadow3);border:1px solid var(--border);animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+.confirm-inner p{margin:8px 0 24px;color:var(--text2);font-size:14px}
+/* TOAST */
+#toasts{position:fixed;bottom:24px;right:20px;z-index:300;display:flex;flex-direction:column;gap:10px;pointer-events:none;align-items:flex-end}
+.toast{background:var(--text);color:var(--bg);padding:12px 20px;border-radius:var(--radius);font-size:13px;font-weight:600;box-shadow:var(--shadow3);animation:toastIn .25s cubic-bezier(.34,1.2,.64,1);pointer-events:all;max-width:320px}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.95)}to{opacity:1;transform:none}}
+/* DARK MODE TOGGLE */
+#theme-toggle{position:fixed;bottom:24px;left:24px;z-index:400;width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all var(--transition)}
+#theme-toggle:hover{transform:scale(1.1);box-shadow:var(--shadow3)}
+/* USER CHIP */
+.user-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(255,255,255,.07);border-radius:20px;font-size:12px;font-weight:600;color:rgba(255,255,255,.6);cursor:pointer;border:1px solid rgba(255,255,255,.1);transition:all var(--transition)}
+.user-chip:hover{background:rgba(255,255,255,.14);color:#fff}
+/* NOTES */
+.notes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:var(--sp4);margin-top:4px}
+.postit{border-radius:var(--radius2);padding:20px 18px 16px;min-height:152px;cursor:pointer;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.05);display:flex;flex-direction:column;justify-content:space-between;transition:all var(--transition)}
+.postit:hover{transform:translateY(-4px) rotate(.3deg);box-shadow:var(--shadow2)}
+.postit-title{font-weight:700;font-size:14px;margin-bottom:8px;color:#0f172a;word-break:break-word}
+.postit-preview{font-size:12px;color:#475569;line-height:1.6;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;flex:1}
+.postit-footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.postit-date{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em}
+.postit-del{background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:16px;padding:3px 5px;border-radius:4px;transition:all var(--transition)}
+.postit-del:hover{color:var(--danger);background:var(--danger-bg)}
+.note-doc{background:var(--surface);border-radius:var(--radius2);padding:var(--sp8);max-width:760px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.note-doc-title{width:100%;border:none;border-bottom:2px solid var(--border);font-size:22px;font-weight:800;color:var(--text);padding:4px 0 12px;outline:none;margin-bottom:20px;background:transparent;font-family:'Inter',sans-serif;transition:border-color var(--transition)}
+.note-doc-title:focus{border-bottom-color:var(--primary)}
+.note-doc-body{width:100%;min-height:400px;border:1.5px solid var(--border2);border-radius:var(--radius);padding:18px;font-size:14px;line-height:1.8;resize:vertical;outline:none;font-family:'Inter',sans-serif;color:var(--text);background:var(--surface);transition:border-color var(--transition),box-shadow var(--transition)}
+.note-doc-body:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow)}
+/* CHECKLIST */
+.checklist-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.checklist-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--primary)}
+/* REMINDER */
+.rem-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
+.rem-dot.pending{background:var(--primary)}
+.rem-dot.urgent{background:var(--danger);animation:blink 1.2s infinite}
+.rem-dot.done{background:var(--success)}
+/* BRIEF */
+.brief-ta{width:100%;border:1.5px solid var(--border);border-radius:var(--radius3);padding:12px 16px;font-size:13px;line-height:1.7;resize:vertical;min-height:80px;font-family:'Inter',sans-serif;color:var(--text);background:var(--surface);transition:border-color var(--transition),box-shadow var(--transition)}
+.brief-ta:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);outline:none}
+/* SYNC */
+#sync-status{font-family:'Inter',sans-serif;font-weight:600;font-size:11px;letter-spacing:.02em}
+/* FADE IN ANIMATION */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeInUp .4s cubic-bezier(.4,0,.2,1) both}
+/* LOGIN */
+#login-screen{display:none;position:fixed;inset:0;z-index:500;align-items:center;justify-content:center;background:linear-gradient(135deg,#06090f 0%,#0f172a 40%,#1a1040 100%)}
+#login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 25% 60%,rgba(99,102,241,.2) 0%,transparent 55%),radial-gradient(ellipse at 75% 20%,rgba(139,92,246,.15) 0%,transparent 50%),radial-gradient(ellipse at 50% 100%,rgba(59,130,246,.1) 0%,transparent 50%);pointer-events:none}
+#login-screen.open{display:flex}
+.login-box{background:rgba(255,255,255,.04);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:48px 44px;width:100%;max-width:400px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12);position:relative;animation:popIn .4s cubic-bezier(.34,1.2,.64,1)}
+.login-logo{font-size:44px;margin-bottom:10px;filter:drop-shadow(0 0 24px rgba(99,102,241,.7))}
+.login-title{font-size:28px;font-weight:800;letter-spacing:.1em;margin-bottom:8px;background:linear-gradient(135deg,#e0e7ff 0%,#a5b4fc 50%,#818cf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-sub{font-size:13px;color:rgba(255,255,255,.4);margin-bottom:36px;font-weight:400;line-height:1.6}
+.login-box .form-group{text-align:left;margin-bottom:18px}
+.login-box .form-group label{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em}
+.login-box .form-group input{width:100%;padding:14px 18px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;font-size:15px;font-family:'Inter',sans-serif;outline:none;color:#fff;transition:all var(--transition)}
+.login-box .form-group input::placeholder{color:rgba(255,255,255,.2)}
+.login-box .form-group input:focus{border-color:rgba(99,102,241,.8);background:rgba(255,255,255,.08);box-shadow:0 0 0 4px rgba(99,102,241,.2)}
+.login-error{color:#f87171;font-size:12px;margin-bottom:14px;min-height:18px;font-weight:600}
+.login-btn{width:100%;padding:15px;background:linear-gradient(135deg,#6366f1 0%,#4f46e5 100%);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;margin-top:6px;transition:all var(--transition);box-shadow:0 4px 24px rgba(79,70,229,.5),inset 0 1px 0 rgba(255,255,255,.2);letter-spacing:.02em}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(79,70,229,.6),inset 0 1px 0 rgba(255,255,255,.2)}
+.login-btn:active{transform:none}
+/* LANDING PAGE */
+#landing{display:none;position:fixed;inset:0;z-index:490;overflow-y:auto;background:var(--bg)}
+#landing.open{display:block}
+.lp-nav{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 var(--sp8);height:64px;display:flex;align-items:center;justify-content:space-between}
+[data-theme=dark] .lp-nav{background:rgba(11,15,25,.85)}
+.lp-logo{font-size:18px;font-weight:800;letter-spacing:.1em;background:linear-gradient(135deg,#6366f1,#4f46e5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lp-nav-btns{display:flex;gap:var(--sp3);align-items:center}
+.lp-hero{min-height:92vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:var(--sp10) var(--sp6);background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);position:relative;overflow:hidden}
+.lp-hero::before{content:'';position:absolute;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.12) 0%,transparent 70%);top:-200px;left:50%;transform:translateX(-50%);pointer-events:none}
+.lp-badge{display:inline-flex;align-items:center;gap:var(--sp2);background:var(--primary-light);color:var(--primary);border:1px solid rgba(99,102,241,.2);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-bottom:var(--sp6);animation:fadeInUp .5s ease both}
+.lp-h1{font-size:clamp(36px,6vw,68px);font-weight:800;line-height:1.1;letter-spacing:-.03em;color:var(--text);margin-bottom:var(--sp5);animation:fadeInUp .5s .1s ease both}
+.lp-h1 span{background:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lp-sub{font-size:clamp(16px,2vw,20px);color:var(--text2);max-width:600px;line-height:1.7;margin-bottom:var(--sp8);animation:fadeInUp .5s .2s ease both}
+.lp-ctas{display:flex;gap:var(--sp3);justify-content:center;flex-wrap:wrap;animation:fadeInUp .5s .3s ease both}
+.lp-btn-primary{padding:14px 32px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(79,70,229,.4);transition:all var(--transition);letter-spacing:.02em}
+.lp-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(79,70,229,.5)}
+.lp-btn-ghost{padding:14px 28px;background:transparent;color:var(--text2);border:1.5px solid var(--border2);border-radius:12px;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;transition:all var(--transition)}
+.lp-btn-ghost:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.lp-section{padding:var(--sp10) var(--sp6);max-width:1100px;margin:0 auto}
+.lp-section-label{font-size:12px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.12em;text-align:center;margin-bottom:var(--sp3)}
+.lp-section-title{font-size:clamp(28px,4vw,42px);font-weight:800;text-align:center;color:var(--text);letter-spacing:-.02em;margin-bottom:var(--sp3);line-height:1.2}
+.lp-section-sub{font-size:16px;color:var(--text2);text-align:center;max-width:540px;margin:0 auto var(--sp8);line-height:1.7}
+.lp-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--sp5)}
+.lp-feat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:var(--sp6);transition:all var(--transition);position:relative;overflow:hidden}
+.lp-feat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),#8b5cf6);opacity:0;transition:opacity var(--transition)}
+.lp-feat:hover{transform:translateY(-4px);box-shadow:var(--shadow2)}
+.lp-feat:hover::before{opacity:1}
+.lp-feat-icon{font-size:32px;margin-bottom:var(--sp3);display:block}
+.lp-feat-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:var(--sp2)}
+.lp-feat-desc{font-size:13px;color:var(--text2);line-height:1.7}
+.lp-mockup{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);box-shadow:var(--shadow3);overflow:hidden;max-width:900px;margin:0 auto}
+.lp-mockup-bar{background:var(--surface2);padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:var(--sp2)}
+.lp-mockup-dot{width:12px;height:12px;border-radius:50%}
+.lp-mockup-screen{padding:var(--sp6);display:grid;grid-template-columns:180px 1fr;gap:var(--sp4);min-height:260px}
+.lp-mock-sidebar{background:var(--sidebar-bg);border-radius:var(--radius);padding:var(--sp4);display:flex;flex-direction:column;gap:var(--sp2)}
+.lp-mock-nav{height:28px;border-radius:6px;background:rgba(255,255,255,.06)}
+.lp-mock-nav.active{background:rgba(99,102,241,.25)}
+.lp-mock-content{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp3);align-content:start}
+.lp-mock-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp4)}
+.lp-mock-title{height:10px;background:var(--border2);border-radius:4px;margin-bottom:var(--sp2);width:60%}
+.lp-mock-num{height:28px;background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(99,102,241,.1));border-radius:6px;width:50%}
+.lp-testimonials{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--sp5)}
+.lp-testimonial{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius2);padding:var(--sp6);transition:all var(--transition)}
+.lp-testimonial:hover{box-shadow:var(--shadow2);transform:translateY(-2px)}
+.lp-stars{color:#f59e0b;font-size:14px;margin-bottom:var(--sp3);letter-spacing:2px}
+.lp-quote{font-size:14px;color:var(--text2);line-height:1.7;margin-bottom:var(--sp4);font-style:italic}
+.lp-author{font-size:13px;font-weight:700;color:var(--text)}
+.lp-author-role{font-size:11px;color:var(--text3);font-weight:500}
+.lp-cta-section{background:linear-gradient(135deg,#1e1b4b,#312e81,#1e1b4b);padding:var(--sp10) var(--sp6);text-align:center;position:relative;overflow:hidden}
+.lp-cta-section::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(99,102,241,.3) 0%,transparent 70%);pointer-events:none}
+.lp-cta-section h2{font-size:clamp(28px,4vw,42px);font-weight:800;color:#fff;margin-bottom:var(--sp3);letter-spacing:-.02em;position:relative}
+.lp-cta-section p{font-size:16px;color:rgba(255,255,255,.6);margin-bottom:var(--sp8);position:relative;line-height:1.7}
+.lp-footer{background:var(--surface2);border-top:1px solid var(--border);padding:var(--sp6) var(--sp8);text-align:center;font-size:12px;color:var(--text3)}
+/* MOBILE */
+@media(max-width:640px){
+  body{font-size:14px}
+  #topbar{display:flex}
+  #sidebar{position:fixed;top:56px;left:0;bottom:0;width:260px;z-index:50;transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #sidebar-overlay.open{display:block}
+  #app-body{flex:1;overflow:hidden}
+  #main{padding:var(--sp4)}
+  h2{font-size:19px}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .form-row,.form-row3{grid-template-columns:1fr}
+  .modal{border-radius:24px 24px 0 0;padding:22px 18px 40px}
+  .btn{padding:11px 16px;font-size:14px}
+  .btn-sm{padding:8px 12px;font-size:12px}
+  td,th{font-size:12px;padding:10px 10px}
+  .note-doc{padding:18px}
+  .login-box{padding:36px 28px;margin:16px}
+  .lp-mockup-screen{grid-template-columns:1fr}
+  .lp-mock-sidebar{display:none}
+  .lp-mock-content{grid-template-columns:1fr 1fr}
+  #theme-toggle{bottom:72px}
+}
+@media(min-width:641px){
+  body{flex-direction:row}
+  #topbar{display:none!important}
+  #sidebar{position:static;transform:none!important}
+  #app-body{flex:1;display:flex;overflow:hidden}
+}
+@media print{#sidebar,#topbar,.toolbar,button,#theme-toggle{display:none!important}#main{padding:0}}
+</style>
+</head>
+<body>
+
+<!-- DARK MODE TOGGLE -->
+<button id="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">🌙</button>
+
+<!-- LANDING PAGE -->
+<div id="landing" class="open">
+  <nav class="lp-nav">
+    <div class="lp-logo">⚡ EXECTOOL</div>
+    <div class="lp-nav-btns">
+      <button id="theme-toggle-lp" onclick="toggleTheme()" style="background:none;border:1px solid var(--border2);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;color:var(--text2);transition:all .2s">🌙</button>
+      <button class="lp-btn-ghost" onclick="showLogin()" style="padding:10px 20px;font-size:14px">Iniciar sesión →</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="lp-hero">
+    <div class="lp-badge">✦ Productividad ejecutiva de alto nivel</div>
+    <h1 class="lp-h1">El sistema definitivo para<br><span>equipos ejecutivos</span><br>de alto rendimiento</h1>
+    <p class="lp-sub">Organiza tareas, agenda, gastos, contactos y más — todo en un solo lugar. Sincronización en tiempo real entre todos tus dispositivos.</p>
+    <div class="lp-ctas">
+      <button class="lp-btn-primary" onclick="showLogin()">Comenzar ahora — es gratis</button>
+      <button class="lp-btn-ghost" onclick="document.getElementById('lp-features').scrollIntoView({behavior:'smooth'})">Ver funciones ↓</button>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="lp-section" id="lp-features">
+    <div class="lp-section-label">Funcionalidades</div>
+    <h2 class="lp-section-title">Todo lo que necesitas,<br>nada que no necesitas</h2>
+    <p class="lp-section-sub">Diseñado para equipos y profesionales que gestionan operaciones complejas cada día.</p>
+    <div class="lp-features">
+      <div class="lp-feat"><span class="lp-feat-icon">✅</span><div class="lp-feat-title">Gestión de tareas</div><div class="lp-feat-desc">Prioriza, asigna fechas y rastrea el estado de cada tarea con un sistema claro y visual.</div></div>
+      <div class="lp-feat"><span class="lp-feat-icon">🔔</span><div class="lp-feat-title">Recordatorios inteligentes</div><div class="lp-feat-desc">Alertas automáticas con repetición configurable. Nunca más olvides un compromiso importante.</div></div>
+      <div class="lp-feat"><span class="lp-feat-icon">📋</span><div class="lp-feat-title">Brief ejecutivo</div><div class="lp-feat-desc">Genera un resumen diario automático con prioridades, agenda y pendientes críticos con un clic.</div></div>
+      <div class="lp-feat"><span class="lp-feat-icon">🔄</span><div class="lp-feat-title">Sincronización en tiempo real</div><div class="lp-feat-desc">Accede desde tu computadora o móvil. Los cambios se sincronizan instantáneamente vía la nube.</div></div>
+      <div class="lp-feat"><span class="lp-feat-icon">💰</span><div class="lp-feat-title">Control de gastos</div><div class="lp-feat-desc">Registra y categoriza gastos. Exporta a Excel o CSV para reportes ejecutivos.</div></div>
+      <div class="lp-feat"><span class="lp-feat-icon">👥</span><div class="lp-feat-title">Directorio de contactos</div><div class="lp-feat-desc">Centraliza toda la información de tus contactos clave. Búsqueda instantánea.</div></div>
+    </div>
+  </section>
+
+  <!-- MOCKUP -->
+  <section class="lp-section" style="padding-top:0">
+    <div class="lp-section-label">Vista previa</div>
+    <h2 class="lp-section-title">Diseñado para trabajar rápido</h2>
+    <div class="lp-mockup">
+      <div class="lp-mockup-bar">
+        <div class="lp-mockup-dot" style="background:#ef4444"></div>
+        <div class="lp-mockup-dot" style="background:#f59e0b"></div>
+        <div class="lp-mockup-dot" style="background:#10b981"></div>
+        <div style="flex:1;height:8px;background:var(--border);border-radius:4px;margin-left:8px;max-width:200px"></div>
+      </div>
+      <div class="lp-mockup-screen">
+        <div class="lp-mock-sidebar">
+          <div style="height:20px;border-radius:6px;background:linear-gradient(135deg,rgba(99,102,241,.4),rgba(99,102,241,.2));margin-bottom:8px"></div>
+          <div class="lp-mock-nav active"></div>
+          <div class="lp-mock-nav"></div>
+          <div class="lp-mock-nav"></div>
+          <div class="lp-mock-nav"></div>
+          <div class="lp-mock-nav"></div>
+        </div>
+        <div class="lp-mock-content">
+          <div class="lp-mock-card"><div class="lp-mock-title"></div><div class="lp-mock-num"></div></div>
+          <div class="lp-mock-card"><div class="lp-mock-title"></div><div class="lp-mock-num" style="background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(16,185,129,.1))"></div></div>
+          <div class="lp-mock-card"><div class="lp-mock-title"></div><div class="lp-mock-num" style="background:linear-gradient(135deg,rgba(245,158,11,.3),rgba(245,158,11,.1))"></div></div>
+          <div class="lp-mock-card" style="grid-column:span 2;padding:12px"><div style="height:8px;background:var(--border2);border-radius:4px;margin-bottom:8px"></div><div style="height:8px;background:var(--border);border-radius:4px;margin-bottom:8px;width:80%"></div><div style="height:8px;background:var(--border);border-radius:4px;width:60%"></div></div>
+          <div class="lp-mock-card"><div class="lp-mock-title"></div><div style="display:flex;flex-direction:column;gap:4px;margin-top:4px"><div style="height:6px;background:var(--border);border-radius:4px"></div><div style="height:6px;background:var(--border);border-radius:4px;width:70%"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="lp-section" style="background:var(--surface2);max-width:100%;padding:var(--sp10) var(--sp6)">
+    <div style="max-width:1100px;margin:0 auto">
+      <div class="lp-section-label">Testimonios</div>
+      <h2 class="lp-section-title">Lo que dicen nuestros usuarios</h2>
+      <div class="lp-testimonials">
+        <div class="lp-testimonial"><div class="lp-stars">★★★★★</div><p class="lp-quote">"Transformó completamente mi forma de trabajar. Antes usaba 4 herramientas diferentes, ahora solo necesito EXECTOOL."</p><div class="lp-author">M. González</div><div class="lp-author-role">Coordinación Ejecutiva · Grupo Industrial</div></div>
+        <div class="lp-testimonial"><div class="lp-stars">★★★★★</div><p class="lp-quote">"El brief ejecutivo automático me ahorra 30 minutos cada mañana. Mi equipo siempre tiene la información que necesita."</p><div class="lp-author">C. Herrera</div><div class="lp-author-role">Gestión de Dirección · Grupo Financiero</div></div>
+        <div class="lp-testimonial"><div class="lp-stars">★★★★★</div><p class="lp-quote">"La sincronización entre computadora y móvil funciona perfecta. No importa dónde esté, siempre tengo todo a la mano."</p><div class="lp-author">S. Ramírez</div><div class="lp-author-role">Asistencia de Dirección General · Empresa Líder</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="lp-cta-section">
+    <h2>Empieza hoy mismo</h2>
+    <p>Únete a cientos de equipos que ya organizan su trabajo con EXECTOOL. Sin tarjeta de crédito, sin complicaciones.</p>
+    <button class="lp-btn-primary" onclick="showLogin()" style="font-size:16px;padding:16px 40px;position:relative">Crear mi cuenta gratis →</button>
+  </section>
+
+  <footer class="lp-footer">
+    <strong style="background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">⚡ EXECTOOL</strong> · Productividad ejecutiva de alto nivel · © 2026
+  </footer>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⚡</div>
+    <div class="login-title">EXECTOOL</div>
+    <div class="login-sub">Ingresa tus credenciales para continuar</div>
+    <div class="form-group"><label>Usuario</label><input type="text" id="login-user" placeholder="usuario" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"></div>
+    <div class="form-group"><label>Contraseña</label><input type="password" id="login-pass" placeholder="••••" maxlength="4" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" onclick="doLogin()">Entrar →</button>
+    <div style="margin-top:20px;font-size:12px;color:rgba(255,255,255,.3)">
+      <span style="cursor:pointer;text-decoration:underline;color:rgba(255,255,255,.4)" onclick="document.getElementById('landing').classList.add('open');document.getElementById('login-screen').classList.remove('open')">← Volver al inicio</span>
+    </div>
+  </div>
+</div>
+
+<div id="topbar">
+  <span id="topbar-title">⚡ EXECTOOL</span>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="user-chip" id="user-chip" onclick="doLogout()">👤 <span id="user-chip-name"></span> · Salir</button>
+    <button id="hamburger" onclick="toggleSidebar()" aria-label="Menú">☰</button>
+  </div>
+</div>
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div id="app-body">
+<div id="sidebar">
+  <h3><span class="logo-icon">⚡</span><span class="logo-text">EXECTOOL</span></h3>
+  <div class="nav-section-label">Principal</div>
+  <div class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard"><span class="icon">🏠</span>Dashboard</div>
+  <div class="nav-item" onclick="nav('tasks')" id="nav-tasks"><span class="icon">✅</span>Tareas</div>
+  <div class="nav-item" onclick="nav('agenda')" id="nav-agenda"><span class="icon">📅</span>Agenda</div>
+  <div class="nav-item" onclick="nav('expenses')" id="nav-expenses"><span class="icon">💰</span>Gastos</div>
+  <div class="nav-item" onclick="nav('contacts')" id="nav-contacts"><span class="icon">👥</span>Contactos</div>
+  <div class="nav-section-label">Herramientas</div>
+  <div class="nav-item" onclick="nav('travels')" id="nav-travels"><span class="icon">✈️</span>Viajes</div>
+  <div class="nav-item" onclick="nav('notes')" id="nav-notes"><span class="icon">📝</span>Notas</div>
+  <div class="nav-item" onclick="nav('templates')" id="nav-templates"><span class="icon">📧</span>Emails</div>
+  <div class="nav-item" onclick="nav('reminders')" id="nav-reminders"><span class="icon">🔔</span>Recordatorios <span id="rem-badge" style="display:none;background:#ef4444;color:#fff;font-size:10px;padding:1px 6px;border-radius:10px;margin-left:4px">0</span></div>
+  <div class="nav-item" onclick="nav('brief')" id="nav-brief"><span class="icon">📋</span>Resumen</div>
+  <div class="sidebar-bottom">
+    <div class="sidebar-user">👤 <span id="sidebar-username"></span></div>
+    <div class="nav-item" onclick="openChangePassword()"><span class="icon">🔐</span>Cambiar contraseña</div>
+    <div class="nav-item" id="btn-reset-demo" style="display:none;color:#f59e0b" onclick="confirmResetDemo()"><span class="icon">🔄</span>Resetear demo</div>
+    <div class="nav-item logout" onclick="doLogout()"><span class="icon">🚪</span>Cerrar sesión</div>
+  </div>
+</div>
+<div id="main"></div>
+</div>
+
+<!-- MODAL -->
+<div id="overlay">
+  <div class="modal" id="modalBox">
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="modalOk">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div id="confirmBox">
+  <div class="confirm-inner">
+    <strong id="confirmTitle">¿Eliminar?</strong>
+    <p id="confirmMsg">Esta acción no se puede deshacer.</p>
+    <div style="display:flex;justify-content:center;gap:10px">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger" id="confirmOk">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<input type="file" id="xlsxInput" accept=".xlsx,.csv" style="display:none">
+
+<script>
+// ===== THEME =====
+function applyTheme(dark){
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  const ico = dark?'☀️':'🌙';
+  document.getElementById('theme-toggle').textContent=ico;
+  const lp=document.getElementById('theme-toggle-lp');
+  if(lp) lp.textContent=ico;
+  localStorage.setItem('execTheme', dark?'dark':'light');
+}
+function toggleTheme(){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  applyTheme(!dark);
+}
+(function(){
+  const saved=localStorage.getItem('execTheme');
+  if(saved==='dark') applyTheme(true);
+})();
+
+// ===== LANDING =====
+function showLogin(){
+  document.getElementById('landing').classList.remove('open');
+  document.getElementById('login-screen').classList.add('open');
+  setTimeout(()=>document.getElementById('login-user').focus(),100);
+}
+
+// ===== FADE IN on nav =====
+const _origNav = typeof nav === 'function' ? nav : null;
+
+// ===== MOBILE SIDEBAR =====
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ===== USERS =====
+const USERS = {
+  'admin':    '1947',
+  'usuario1': '3582',
+  'usuario2': '7164',
+  'eusaber':  '1928'
+};
+let currentUser = null;
+
+function doLogin(){
+  const user = document.getElementById('login-user').value.trim().toLowerCase();
+  const pass = document.getElementById('login-pass').value.trim();
+  const err  = document.getElementById('login-error');
+  if(!USERS[user] || USERS[user] !== pass){
+    err.textContent = 'Usuario o contraseña incorrectos';
+    document.getElementById('login-pass').value='';
+    return;
+  }
+  err.textContent='';
+  currentUser = user;
+  sessionStorage.setItem('execUser', user);
+  document.getElementById('login-screen').classList.remove('open');
+  document.getElementById('landing').classList.remove('open');
+  document.getElementById('user-chip-name').textContent = user;
+  document.getElementById('sidebar-username').textContent = user;
+  const resetBtn = document.getElementById('btn-reset-demo');
+  if(resetBtn) resetBtn.style.display = user==='admin' ? '' : 'none';
+  initSession();
+}
+
+function doLogout(){
+  if(!confirm('¿Cerrar sesión?')) return;
+  currentUser = null;
+  sessionStorage.removeItem('execUser');
+  // Reset db
+  db = emptyDb();
+  _fbLoaded = false;
+  if(_unsubscribe) { _unsubscribe(); _unsubscribe=null; }
+  document.getElementById('login-screen').classList.add('open');
+  document.getElementById('login-user').value='';
+  document.getElementById('login-pass').value='';
+  document.getElementById('main').innerHTML='';
+}
+
+function emptyDb(){
+  return { tasks:[], agenda:[], expenses:[], contacts:[], travels:[], notes:[], templates:[], reminders:[], summaries:[] };
+}
+
+// ===== FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyANXa7fhTufajKkeEWbL-y7Kyf6bF5Vpfw",
+  authDomain: "exectool-5a6e5.firebaseapp.com",
+  projectId: "exectool-5a6e5",
+  storageBucket: "exectool-5a6e5.firebasestorage.app",
+  messagingSenderId: "587394129861",
+  appId: "1:587394129861:web:28171cabd6b5894d7535ac",
+  measurementId: "G-Z9HTCYJJTL"
+};
+let fsdb, DOC_REF, _unsubscribe=null;
+function initFirebase(){
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    fsdb = firebase.firestore();
+  }catch(e){ console.warn('Firebase init error:', e); }
+}
+let _syncTimeout = null;
+
+// ===== STATE =====
+const SKEY_PREFIX = 'execAssistant_v3_';
+let db = emptyDb();
+let currentSection = 'dashboard';
+let confirmCb = null;
+let _fbLoaded = false;
+
+function save(){
+  localStorage.setItem(SKEY_PREFIX + currentUser, JSON.stringify(db));
+  if(_syncTimeout) clearTimeout(_syncTimeout);
+  _syncTimeout = setTimeout(syncToFirebase, 1200);
+}
+
+function syncToFirebase(){
+  if(!DOC_REF) return;
+  DOC_REF.set(db).catch(e=>console.warn('Firebase sync error:', e));
+}
+
+function initDemoData(){
+  if(currentUser !== 'admin') return;
+  const isEmpty = db.tasks.length===0 && db.agenda.length===0 && db.contacts.length===0;
+  if(!isEmpty) return;
+
+  const d = (offset)=>{ const x=new Date(); x.setDate(x.getDate()+offset); const m=String(x.getMonth()+1).padStart(2,'0'); const day=String(x.getDate()).padStart(2,'0'); return `${x.getFullYear()}-${m}-${day}`; };
+  const t=d(0), d1=d(1), d2=d(2), d3=d(3), d4=d(4), d5=d(5), dm1=d(-1), dm2=d(-2);
+
+  db.tasks=[
+    {id:genId(),title:'Preparar reporte semanal de ventas',desc:'Consolidar datos de todas las regiones',priority:'alta',date:d1,status:'pendiente'},
+    {id:genId(),title:'Seguimiento con proveedor clave',desc:'Confirmar condiciones del contrato renovado',priority:'media',date:t,status:'pendiente'},
+    {id:genId(),title:'Confirmar agenda del director',desc:'Revisar y ajustar calendario de la semana',priority:'alta',date:t,status:'pendiente'},
+    {id:genId(),title:'Revisar presupuesto mensual',desc:'Validar cifras con el área de finanzas',priority:'media',date:d2,status:'pendiente'},
+    {id:genId(),title:'Enviar propuesta comercial a cliente nuevo',desc:'Incluir tarifas y condiciones actualizadas',priority:'alta',date:d1,status:'pendiente'},
+    {id:genId(),title:'Coordinar viaje del director a CDMX',desc:'Vuelo, hotel y traslados',priority:'alta',date:d2,status:'pendiente'},
+    {id:genId(),title:'Actualizar base de datos de contactos',desc:'Revisar y depurar contactos obsoletos',priority:'baja',date:d3,status:'pendiente'},
+    {id:genId(),title:'Solicitar cotización de papelería',desc:'Materiales para el trimestre',priority:'baja',date:d4,status:'pendiente'},
+    {id:genId(),title:'Preparar presentación para junta directiva',desc:'Resultados Q1 y proyección Q2',priority:'alta',date:d3,status:'pendiente'},
+    {id:genId(),title:'Revisar contratos vencidos este mes',desc:'Identificar renovaciones urgentes',priority:'media',date:d5,status:'pendiente'},
+  ];
+
+  db.agenda=[
+    {id:genId(),date:d1,time:'10:00',desc:'Reunión con equipo comercial',location:'Sala de juntas A'},
+    {id:genId(),date:t,time:'16:00',desc:'Llamada con proveedor',location:'Remoto / Teams'},
+    {id:genId(),date:d2,time:'11:00',desc:'Junta financiera',location:'Oficina dirección'},
+    {id:genId(),date:t,time:'09:00',desc:'Stand-up diario con asistentes',location:'Sala B'},
+    {id:genId(),date:d1,time:'14:30',desc:'Presentación de resultados Q1',location:'Sala de consejo'},
+    {id:genId(),date:d2,time:'09:00',desc:'Entrevista candidato — puesto administrativo',location:'RH - Piso 3'},
+    {id:genId(),date:d3,time:'13:00',desc:'Comida de trabajo con cliente',location:'Restaurante Del Lago'},
+    {id:genId(),date:d4,time:'10:00',desc:'Revisión de contratos con legal',location:'Oficina jurídica'},
+    {id:genId(),date:d4,time:'16:00',desc:'Videoconferencia con sucursal Monterrey',location:'Zoom'},
+  ];
+
+  db.expenses=[
+    {id:genId(),amount:'2500',category:'Transporte',desc:'Vuelo ejecutivo — reunión corporativa',date:t},
+    {id:genId(),amount:'850',category:'Comida',desc:'Comida con cliente estratégico',date:t},
+    {id:genId(),amount:'1200',category:'Transporte',desc:'Transporte ejecutivo aeropuerto',date:d1},
+    {id:genId(),amount:'3800',category:'Alojamiento',desc:'Hotel Camino Real — 2 noches director',date:d1},
+    {id:genId(),amount:'450',category:'Material',desc:'Material de oficina y papelería',date:dm1},
+    {id:genId(),amount:'1650',category:'Servicios',desc:'Suscripción software gestión anual',date:dm2},
+    {id:genId(),amount:'600',category:'Comida',desc:'Desayuno ejecutivo con consejo',date:d2},
+    {id:genId(),amount:'920',category:'Transporte',desc:'Renta de auto ejecutivo 2 días',date:d3},
+    {id:genId(),amount:'250',category:'General',desc:'Impresiones y encuadernados presentación',date:d2},
+  ];
+
+  db.contacts=[
+    {id:genId(),name:'Juan Pérez',company:'Proveedor Nacional S.A.',phone:'+52 477 100 2000',email:'jperez@proveedor.com',notes:'Contacto principal renovación de contrato'},
+    {id:genId(),name:'María López',company:'Dirección de Finanzas',phone:'+52 477 200 3000',email:'mlopez@empresa.com',notes:'Aprobaciones presupuestales y reportes'},
+    {id:genId(),name:'Carlos Ruiz',company:'Dirección Comercial',phone:'+52 477 300 4000',email:'cruiz@empresa.com',notes:'Director Comercial — reportes semanales'},
+    {id:genId(),name:'Ana Martínez',company:'Recursos Humanos',phone:'+52 477 400 5000',email:'amartinez@empresa.com',notes:'Coordinación de eventos internos y viajes'},
+    {id:genId(),name:'Roberto Sánchez',company:'Legal y Contratos',phone:'+52 477 500 6000',email:'rsanchez@empresa.com',notes:'Revisión y firma de contratos corporativos'},
+    {id:genId(),name:'Diana Torres',company:'Cliente Premium S.A.',phone:'+52 55 100 7000',email:'dtorres@cliente.com',notes:'Cliente clave — atención prioritaria'},
+    {id:genId(),name:'Miguel Herrera',company:'Tecnología Interna',phone:'+52 477 600 8000',email:'mherrera@empresa.com',notes:'Soporte IT y sistemas internos'},
+    {id:genId(),name:'Laura Vega',company:'Dirección General',phone:'+52 477 700 9000',email:'lvega@empresa.com',notes:'Asistente del CEO — coordinación directa'},
+    {id:genId(),name:'Fernando Castillo',company:'Banco Nacional',phone:'+52 55 200 1000',email:'fcastillo@banco.com',notes:'Ejecutivo de cuenta bancaria corporativa'},
+  ];
+
+  db.notes=[
+    {id:genId(),title:'Resumen ejecutivo — semana actual',content:`PRIORIDADES DE LA SEMANA\n• Cierre de contrato con proveedor clave\n• Presentación de resultados al director\n• Revisión de presupuesto Q2\n\nSEGUIMIENTOS PENDIENTES\n• Respuesta de finanzas sobre ajuste presupuestal\n• Confirmación de agenda visita corporativa\n\nNOTAS\n• Mantener comunicación con equipo comercial\n• Actualizar CRM antes del viernes`,date:t},
+    {id:genId(),title:'Protocolo de viajes ejecutivos',content:`PROCESO ESTÁNDAR DE VIAJES\n\n1. Solicitud con mínimo 5 días hábiles\n2. Aprobación del director de área\n3. Cotización mínimo 2 opciones\n4. Reserva con tarjeta corporativa\n5. Entregar itinerario completo\n\nPROVEEDORES PREFERENTES\n• Vuelos: Aeroméxico / VivaAerobus\n• Hotel: Camino Real / Fiesta Americana\n• Auto: Hertz corporativo`,date:dm1},
+    {id:genId(),title:'Claves y accesos sistemas internos',content:`SISTEMAS CORPORATIVOS\n\n• ERP: portal.empresa.com\n• CRM: crm.empresa.com\n• Nómina: rh.empresa.com\n• Videoconferencia: meet.empresa.com\n\nNOTA: Renovar contraseñas cada 90 días\nContacto soporte: ext. 1200`,date:dm2},
+    {id:genId(),title:'Agenda de pendientes Q2',content:`PROYECTOS EN CURSO\n\n→ Renovación contrato proveedor logístico (Abril 30)\n→ Auditoría financiera interna (Mayo 15)\n→ Presentación resultados semestral (Junio 1)\n→ Revisión estructura organizacional (Mayo 30)\n\nRECURSOS NECESARIOS\n• Sala de consejo reservada\n• Material impreso con anticipación\n• Confirmación asistencia directivos`,date:d1},
+    {id:genId(),title:'Directorio de emergencias',content:`CONTACTOS DE EMERGENCIA CORPORATIVA\n\n🔴 Seguridad: ext. 100\n🔴 Médico empresa: ext. 150\n🔴 IT urgente: ext. 1200\n🔴 Mantenimiento: ext. 200\n\nEXTERNOS\n• Bomberos: 911\n• Cruz Roja: 065\n• Seguridad privada: +52 477 999 0000`,date:dm2},
+    {id:genId(),title:'Notas reunión — equipo comercial',content:`REUNIÓN EQUIPO COMERCIAL\nFecha: ${t}\n\nACUERDOS\n• Incrementar contacto con clientes A y B esta semana\n• Entregar propuestas pendientes antes del jueves\n• Reporte de pipeline actualizado cada lunes\n\nSIGUIENTE REUNIÓN\n• Fecha: ${d1} 10:00 hrs\n• Lugar: Sala de juntas A`,date:t},
+    {id:genId(),title:'Checklist cierre de mes',content:`CHECKLIST CIERRE MENSUAL\n\n☐ Conciliación bancaria\n☐ Reporte de gastos enviado a finanzas\n☐ Facturas pendientes de autorizar\n☐ Nómina revisada y aprobada\n☐ KPIs actualizados en dashboard\n☐ Minuta de junta directiva enviada\n☐ Archivos digitalizados y respaldados`,date:d4},
+  ];
+
+  db.templates=[
+    {id:genId(),name:'Email de seguimiento',body:`Estimado/a [Nombre],\n\nEspero que se encuentre bien. Me permito hacer seguimiento a nuestra conversación anterior respecto a [tema].\n\n¿Podría confirmarme el estatus actual? Quedo en espera de su respuesta.\n\nSaludos cordiales,\n[Tu nombre]`},
+    {id:genId(),name:'Confirmación de reunión',body:`Estimado/a [Nombre],\n\nPor este medio confirmo nuestra reunión programada para el [fecha] a las [hora] en [lugar/plataforma].\n\nTemas a tratar:\n1. [Tema 1]\n2. [Tema 2]\n\nSi necesita hacer algún cambio, no dude en contactarme.\n\nSaludos,\n[Tu nombre]`},
+    {id:genId(),name:'Solicitud de cotización',body:`Estimado/a [Proveedor],\n\nPor medio del presente, solicitamos cotización formal para:\n\n• [Producto/Servicio]\n• Cantidad: [N]\n• Fecha de entrega requerida: [fecha]\n\nFavor de incluir precios unitarios, condiciones de pago y tiempo de entrega.\n\nQuedamos en espera de su propuesta.\n\nAtentamente,\n[Tu nombre]`},
+    {id:genId(),name:'Cancelación de cita',body:`Estimado/a [Nombre],\n\nLamento informarle que por motivos de agenda debo cancelar nuestra reunión del [fecha] a las [hora].\n\nMe gustaría reagendarla para [fecha alternativa] si le es conveniente.\n\nDisculpe los inconvenientes.\n\nSaludos cordiales,\n[Tu nombre]`},
+    {id:genId(),name:'Bienvenida a nuevo colaborador',body:`Estimado/a [Nombre],\n\nEn nombre del equipo directivo, le damos la más cordial bienvenida a [Empresa].\n\nEstaremos en contacto para coordinar su proceso de integración. Le comparto los primeros pasos:\n\n1. Reunión de inducción: [fecha y hora]\n2. Entrega de equipo: [área IT]\n3. Accesos a sistemas: [contacto]\n\nCualquier duda, estamos a sus órdenes.\n\nSaludos,\n[Tu nombre]`},
+    {id:genId(),name:'Recordatorio de pago',body:`Estimado/a [Nombre],\n\nEspero se encuentre bien. Le escribo para recordarle que tenemos pendiente el pago correspondiente a [concepto] por la cantidad de $[monto], con fecha límite el [fecha].\n\nPor favor confirme la recepción de este mensaje y el estatus del pago.\n\nGracias por su atención.\n\nSaludos,\n[Tu nombre]`},
+    {id:genId(),name:'Informe ejecutivo breve',body:`INFORME EJECUTIVO — [FECHA]\n\nPRIORIDADES DEL DÍA\n• [Punto 1]\n• [Punto 2]\n\nACUERDOS PENDIENTES\n• [Acuerdo 1 — responsable — fecha]\n• [Acuerdo 2 — responsable — fecha]\n\nSIGUIENTES PASOS\n• [Acción 1]\n• [Acción 2]\n\nPreparado por: [Tu nombre]`},
+    {id:genId(),name:'Invitación a evento corporativo',body:`Estimado/a [Nombre],\n\nNos complace invitarle al [nombre del evento] que se llevará a cabo el [fecha] a las [hora] en [lugar].\n\nPrograma:\n• [Actividad 1] — [hora]\n• [Actividad 2] — [hora]\n\nConfirme su asistencia antes del [fecha límite].\n\nEsperamos contar con su presencia.\n\nSaludos,\n[Tu nombre]`},
+  ];
+
+  save();
+  showSyncStatus('✨ Datos demo cargados');
+}
+
+function confirmResetDemo(){
+  confirm2('¿Resetear datos demo?','Se borrarán TODOS los datos actuales y se cargarán los datos de ejemplo originales. Esta acción no se puede deshacer.',()=>{
+    db = emptyDb();
+    initDemoData();
+    if(DOC_REF) DOC_REF.set(db);
+    nav(currentSection);
+    toast('🔄 Datos demo restaurados');
+  });
+}
+
+function initSession(){
+  // Load local cache first for instant render
+  const cached = localStorage.getItem(SKEY_PREFIX + currentUser);
+  if(cached){ try{ db={...emptyDb(),...JSON.parse(cached)}; }catch(e){} }
+  ['tasks','agenda','expenses','contacts','travels','templates','reminders','summaries'].forEach(k=>{ if(!Array.isArray(db[k])) db[k]=[]; });
+  if(!Array.isArray(db.notes)) db.notes=[];
+
+  try{ initFirebase(); }catch(e){}
+  if(!fsdb){ nav('dashboard'); return; }
+
+  // Per-user document
+  DOC_REF = fsdb.collection('exectool_users').doc(currentUser);
+  showSyncStatus('⏳ Sincronizando...');
+
+  DOC_REF.get().then(doc=>{
+    if(doc.exists){
+      db = {...emptyDb(), ...doc.data()};
+      ['tasks','agenda','expenses','contacts','travels','templates','reminders','summaries'].forEach(k=>{ if(!Array.isArray(db[k])) db[k]=[]; });
+      if(!Array.isArray(db.notes)) db.notes=[];
+      localStorage.setItem(SKEY_PREFIX+currentUser, JSON.stringify(db));
+      showSyncStatus('✅ Sincronizado');
+    } else {
+      DOC_REF.set(db);
+      showSyncStatus('✅ Cuenta lista');
+    }
+    _fbLoaded=true;
+    initDemoData();
+    nav('dashboard');
+  }).catch(e=>{
+    console.warn('Firebase load error:', e);
+    showSyncStatus('⚠️ Sin conexión — modo local');
+    _fbLoaded=true;
+    initDemoData();
+    nav('dashboard');
+  });
+
+  // Real-time listener
+  if(_unsubscribe) _unsubscribe();
+  _unsubscribe = DOC_REF.onSnapshot(doc=>{
+    if(!doc.exists||!_fbLoaded) return;
+    const remote=doc.data();
+    if(JSON.stringify(db)!==JSON.stringify(remote)){
+      db={...emptyDb(),...remote};
+      ['tasks','agenda','expenses','contacts','travels','templates','reminders','summaries'].forEach(k=>{ if(!Array.isArray(db[k])) db[k]=[]; });
+      if(!Array.isArray(db.notes)) db.notes=[];
+      localStorage.setItem(SKEY_PREFIX+currentUser, JSON.stringify(db));
+      showSyncStatus('🔄 Actualizado desde otro dispositivo');
+      const renders={dashboard:renderDashboard,tasks:renderTasks,agenda:renderAgenda,expenses:renderExpenses,contacts:renderContacts,travels:renderTravels,notes:renderNotes,templates:renderTemplates,reminders:renderReminders,brief:renderBrief};
+      if(renders[currentSection]) renders[currentSection]();
+    }
+  });
+}
+
+// ===== INIT handled by post-Firebase script block =====
+
+function showSyncStatus(msg){
+  let el = document.getElementById('sync-status');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'sync-status';
+    el.style.cssText='position:fixed;top:8px;left:50%;transform:translateX(-50%);background:#1e1e2f;color:#fff;padding:5px 14px;border-radius:20px;font-size:12px;z-index:400;opacity:1;transition:opacity 1s';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.opacity='0'; }, 3000);
+}
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(d){ if(!d) return '—'; try{ const [y,m,day]=String(d).split('T')[0].split('-'); return new Date(+y,+m-1,+day).toLocaleDateString('es-MX',{day:'2-digit',month:'short',year:'numeric'}); }catch(e){ return d; } }
+function fmtDT(d){ if(!d) return '—'; try{ const dt=new Date(d); return dt.toLocaleDateString('es-MX',{day:'2-digit',month:'short'})+' '+dt.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return d; } }
+function today(){ const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().split('T')[0]; }
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.getElementById('toasts').appendChild(t); setTimeout(()=>t.remove(),3500); }
+
+// ===== NAV =====
+function nav(s){
+  currentSection=s;
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('nav-'+s); if(el) el.classList.add('active');
+  closeSidebar();
+  const m=document.getElementById('main');
+  m.style.opacity='0';
+  const renders={dashboard:renderDashboard,tasks:renderTasks,agenda:renderAgenda,expenses:renderExpenses,contacts:renderContacts,travels:renderTravels,notes:renderNotes,templates:renderTemplates,reminders:renderReminders,brief:renderBrief};
+  if(renders[s]) renders[s]();
+  requestAnimationFrame(()=>{ m.style.transition='opacity .25s ease'; m.style.opacity='1'; setTimeout(()=>m.style.transition='',260); });
+}
+
+// ===== MODAL =====
+function openModal(title, bodyHTML, onOkOrButtons){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=bodyHTML;
+  const footer=document.querySelector('#modalBox .modal-footer');
+  if(Array.isArray(onOkOrButtons)){
+    // Array of {text, cls, action} buttons
+    footer.innerHTML='';
+    onOkOrButtons.forEach(b=>{
+      const btn=document.createElement('button');
+      btn.className='btn '+b.cls;
+      btn.textContent=b.text;
+      btn.onclick=()=>{ if(b.action==='close'){ closeModal(); } else { const r=b.action(); if(r!==false) closeModal(); } };
+      footer.appendChild(btn);
+    });
+  } else {
+    // Simple callback mode — restore default footer buttons
+    footer.innerHTML='<button class="btn btn-secondary" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" id="modalOk">Guardar</button>';
+    document.getElementById('modalOk').onclick=()=>{ if(onOkOrButtons()) closeModal(); };
+  }
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>{ const f=document.querySelector('#modalBody input,#modalBody textarea'); if(f) f.focus(); },80);
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('open'); }
+document.getElementById('overlay').addEventListener('click',e=>{ if(e.target===document.getElementById('overlay')) closeModal(); });
+
+// ===== CONFIRM =====
+function confirm2(title, msg, cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmMsg').textContent=msg||'Esta acción no se puede deshacer.';
+  confirmCb=cb;
+  document.getElementById('confirmOk').onclick=()=>{ closeConfirm(); cb(); };
+  document.getElementById('confirmBox').classList.add('open');
+}
+function closeConfirm(){ document.getElementById('confirmBox').classList.remove('open'); }
+
+// ===== REMINDERS ENGINE =====
+function checkReminders(){
+  const now=new Date();
+  let changed=false;
+  db.reminders.forEach(r=>{
+    if(r.status==='done') return;
+    if(r.snoozedUntil && new Date(r.snoozedUntil)>now) return;
+    if(new Date(r.datetime)<=now && r.status!=='urgent'){
+      r.status='urgent'; changed=true;
+      if('Notification' in window && Notification.permission==='granted')
+        new Notification('⚡ Recordatorio: '+r.title,{body:r.desc||''});
+      else toast('🔔 '+r.title);
+    }
+  });
+  if(changed){ save(); }
+  const pending=db.reminders.filter(r=>r.status!=='done').length;
+  const badge=document.getElementById('rem-badge');
+  if(badge){ if(pending>0){badge.style.display='';badge.textContent=pending;}else badge.style.display='none'; }
+}
+if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+setInterval(checkReminders, 60000);
+checkReminders();
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  const td=today();
+  const todayTasks=db.tasks.filter(t=>t.date===td && t.status!=='completado');
+  const todayEvents=db.agenda.filter(e=>e.date===td);
+  const urgent=db.reminders.filter(r=>r.status==='urgent');
+  const pending=db.reminders.filter(r=>r.status==='pending');
+  document.getElementById('main').innerHTML=`
+    <h2>Dashboard — ${new Date().toLocaleDateString('es-MX',{dateStyle:'full'})}</h2>
+    <div class="grid3" style="margin-bottom:16px">
+      <div class="stat"><div class="num">${db.tasks.filter(t=>t.status!=='completado').length}</div><div class="lbl">Tareas pendientes</div></div>
+      <div class="stat"><div class="num">${todayEvents.length}</div><div class="lbl">Eventos hoy</div></div>
+      <div class="stat"><div class="num ${urgent.length>0?'':''}"">${urgent.length}</div><div class="lbl">Recordatorios urgentes</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>✅ Tareas de hoy</h3>
+        ${todayTasks.length ? todayTasks.map(t=>`<div style="padding:5px 0;border-bottom:1px solid #f0f0f0"><span class="badge ${t.priority}">${t.priority}</span> ${esc(t.title)}</div>`).join('') : '<p style="color:#aaa;font-size:13px">Sin tareas para hoy</p>'}
+      </div>
+      <div class="card">
+        <h3>📅 Agenda de hoy</h3>
+        ${todayEvents.length ? todayEvents.map(e=>`<div style="padding:5px 0;border-bottom:1px solid #f0f0f0"><strong>${esc(e.time)}</strong> — ${esc(e.desc)}</div>`).join('') : '<p style="color:#aaa;font-size:13px">Sin eventos hoy</p>'}
+      </div>
+      <div class="card">
+        <h3>🔔 Recordatorios activos</h3>
+        ${[...urgent,...pending].slice(0,5).map(r=>`<div style="padding:5px 0;border-bottom:1px solid #f0f0f0"><span class="rem-dot ${r.status}"></span><span class="badge ${r.status==='urgent'?'urgente':'pendiente'}">${r.status==='urgent'?'URGENTE':'Pendiente'}</span> ${esc(r.title)}</div>`).join('') || '<p style="color:#aaa;font-size:13px">Sin recordatorios</p>'}
+      </div>
+      <div class="card">
+        <h3>💰 Gastos recientes</h3>
+        ${db.expenses.slice(-4).reverse().map(e=>`<div style="padding:5px 0;border-bottom:1px solid #f0f0f0"><strong>$${e.amount}</strong> — ${esc(e.desc)}</div>`).join('') || '<p style="color:#aaa;font-size:13px">Sin gastos registrados</p>'}
+      </div>
+    </div>`;
+}
+
+// ===== TASKS =====
+function renderTasks(){
+  const rows=db.tasks.map((t,i)=>`
+    <tr>
+      <td>${esc(t.title)}</td>
+      <td><span class="badge ${t.priority}">${t.priority}</span></td>
+      <td>${fmt(t.date)}</td>
+      <td><span class="badge ${t.status}">${t.status}</span></td>
+      <td>${esc(t.desc||'')}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-secondary" onclick="editTask(${i})">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDeleteTask(${i})">✕</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('main').innerHTML=`
+    <h2>Tareas</h2>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="addTask()">+ Nueva tarea</button>
+      <label class="btn btn-secondary" style="cursor:pointer">↑ Importar Excel<input type="file" accept=".xlsx,.csv" style="display:none" onchange="importExcel(event,'tasks')"></label>
+      <button class="btn btn-secondary" onclick="exportCSV('tasks')">↓ CSV</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Título</th><th>Prioridad</th><th>Fecha</th><th>Estado</th><th>Descripción</th><th>Acciones</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px">Sin tareas</td></tr>'}</tbody></table></div>`;
+}
+function taskForm(t={}){
+  return `
+    <div class="form-group"><label>Título *</label><input type="text" id="f-title" value="${esc(t.title||'')}"></div>
+    <div class="form-group"><label>Descripción</label><textarea id="f-desc">${esc(t.desc||'')}</textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Prioridad</label><select id="f-priority"><option ${t.priority==='alta'?'selected':''}>alta</option><option ${t.priority==='media'||!t.priority?'selected':''}>media</option><option ${t.priority==='baja'?'selected':''}>baja</option></select></div>
+      <div class="form-group"><label>Fecha límite</label><input type="date" id="f-date" value="${t.date||''}"></div>
+    </div>
+    <div class="form-group"><label>Estado</label><select id="f-status"><option ${t.status!=='completado'?'selected':''}>pendiente</option><option ${t.status==='completado'?'selected':''}>completado</option></select></div>
+    <div style="background:#f0f4ff;border-radius:6px;padding:12px;margin-top:8px">
+      <strong style="font-size:12px">🔔 Recordatorio (opcional)</strong>
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-group"><label>Fecha/hora</label><input type="datetime-local" id="f-remdt" value="${t.remdt||''}"></div>
+        <div class="form-group"><label>Repetición</label><select id="f-repeat"><option value="none">Sin repetición</option><option value="daily">Diario</option><option value="weekly">Semanal</option></select></div>
+      </div>
+    </div>`;
+}
+function addTask(){
+  openModal('Nueva tarea', taskForm(), ()=>{
+    const title=document.getElementById('f-title').value.trim();
+    if(!title){ toast('El título es requerido'); return false; }
+    const task={id:genId(),title,desc:document.getElementById('f-desc').value,priority:document.getElementById('f-priority').value,date:document.getElementById('f-date').value,status:document.getElementById('f-status').value};
+    db.tasks.push(task);
+    const remdt=document.getElementById('f-remdt').value;
+    if(remdt){ db.reminders.push({id:genId(),title,desc:'Tarea: '+title,datetime:remdt,repeat:document.getElementById('f-repeat').value,status:'pending',taskId:task.id}); }
+    save(); renderTasks(); toast('Tarea agregada'); return true;
+  });
+}
+function editTask(i){
+  const t=db.tasks[i];
+  const existing=db.reminders.find(r=>r.taskId===t.id);
+  const tf=taskForm({...t,remdt:existing?.datetime||''});
+  openModal('Editar tarea', tf, ()=>{
+    const title=document.getElementById('f-title').value.trim();
+    if(!title){ toast('El título es requerido'); return false; }
+    db.tasks[i]={...t,title,desc:document.getElementById('f-desc').value,priority:document.getElementById('f-priority').value,date:document.getElementById('f-date').value,status:document.getElementById('f-status').value};
+    const remdt=document.getElementById('f-remdt').value;
+    db.reminders=db.reminders.filter(r=>r.taskId!==t.id);
+    if(remdt){ db.reminders.push({id:genId(),title,desc:'Tarea: '+title,datetime:remdt,repeat:document.getElementById('f-repeat').value,status:'pending',taskId:t.id}); }
+    save(); renderTasks(); toast('Tarea actualizada'); return true;
+  });
+}
+function confirmDeleteTask(i){ confirm2('¿Eliminar tarea?','',()=>{ db.tasks.splice(i,1); save(); renderTasks(); toast('Tarea eliminada'); }); }
+
+// ===== AGENDA =====
+function renderAgenda(){
+  const rows=db.agenda.map((e,i)=>`
+    <tr>
+      <td>${fmt(e.date)}</td>
+      <td>${esc(e.time||'')}</td>
+      <td>${esc(e.desc)}</td>
+      <td>${esc(e.location||'')}</td>
+      <td style="white-space:nowrap;display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-secondary" onclick="editEvent(${i})" title="Editar">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDeleteEvent(${i})" title="Eliminar">✕</button>
+        <button class="btn btn-sm btn-secondary" onclick="openGoogleCalendar(db.agenda[${i}])" title="Agregar a Google Calendar">📅</button>
+        <button class="btn btn-sm btn-secondary" onclick="openOutlookCalendar(db.agenda[${i}])" title="Agregar a Outlook">📆</button>
+        <button class="btn btn-sm btn-secondary" onclick="downloadICS(db.agenda[${i}])" title="Descargar ICS">📥</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('main').innerHTML=`
+    <h2>Agenda / Reuniones</h2>
+    <div class="toolbar"><button class="btn btn-primary" onclick="addEvent()">+ Nuevo evento</button>
+    <button class="btn btn-secondary" onclick="exportCSV('agenda')">↓ CSV</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Hora</th><th>Descripción</th><th>Ubicación</th><th>Acciones</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">Sin eventos</td></tr>'}</tbody></table></div>`;
+}
+
+function _calDT(date, time){
+  // Returns YYYYMMDDTHHmmss for calendar URLs
+  const d = date||today();
+  const t = time||'00:00';
+  const [h,m] = t.split(':');
+  return d.replace(/-/g,'')+'T'+(h||'00').padStart(2,'0')+(m||'00').padStart(2,'0')+'00';
+}
+function _calDTEnd(date, time){
+  // Default duration: 1 hour
+  const start = new Date((date||today())+'T'+(time||'00:00'));
+  start.setHours(start.getHours()+1);
+  const pad = n=>String(n).padStart(2,'0');
+  return `${start.getFullYear()}${pad(start.getMonth()+1)}${pad(start.getDate())}T${pad(start.getHours())}${pad(start.getMinutes())}00`;
+}
+function openGoogleCalendar(e){
+  if(!e) return;
+  const start=_calDT(e.date,e.time);
+  const end=_calDTEnd(e.date,e.time);
+  const url=`https://calendar.google.com/calendar/render?action=TEMPLATE`
+    +`&text=${encodeURIComponent(e.desc||'Evento')}`
+    +`&dates=${start}/${end}`
+    +`&location=${encodeURIComponent(e.location||'')}`
+    +`&details=${encodeURIComponent('Creado desde EXECTOOL')}`;
+  window.open(url,'_blank');
+}
+function openOutlookCalendar(e){
+  if(!e) return;
+  const start=`${e.date||today()}T${e.time||'00:00'}:00`;
+  const endD=new Date((e.date||today())+'T'+(e.time||'00:00'));
+  endD.setHours(endD.getHours()+1);
+  const pad=n=>String(n).padStart(2,'0');
+  const end=`${endD.getFullYear()}-${pad(endD.getMonth()+1)}-${pad(endD.getDate())}T${pad(endD.getHours())}:${pad(endD.getMinutes())}:00`;
+  const url=`https://outlook.live.com/calendar/0/deeplink/compose?`
+    +`subject=${encodeURIComponent(e.desc||'Evento')}`
+    +`&startdt=${encodeURIComponent(start)}`
+    +`&enddt=${encodeURIComponent(end)}`
+    +`&location=${encodeURIComponent(e.location||'')}`
+    +`&body=${encodeURIComponent('Creado desde EXECTOOL')}`;
+  window.open(url,'_blank');
+}
+function downloadICS(e){
+  if(!e) return;
+  const start=_calDT(e.date,e.time);
+  const end=_calDTEnd(e.date,e.time);
+  const uid=`exectool-${Date.now()}@local`;
+  const ics=[
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//EXECTOOL//ES',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${_calDT(today(),new Date().toTimeString().slice(0,5))}`,
+    `DTSTART:${start}`,
+    `DTEND:${end}`,
+    `SUMMARY:${(e.desc||'Evento').replace(/\n/g,'\\n')}`,
+    `LOCATION:${(e.location||'').replace(/\n/g,'\\n')}`,
+    'DESCRIPTION:Creado desde EXECTOOL',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`${(e.desc||'evento').slice(0,30).replace(/\s+/g,'_')}.ics`;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  toast('📥 Archivo ICS descargado');
+}
+function eventForm(e={}){
+  return `
+    <div class="form-row">
+      <div class="form-group"><label>Fecha *</label><input type="date" id="f-date" value="${e.date||today()}"></div>
+      <div class="form-group"><label>Hora</label><input type="text" id="f-time" placeholder="09:00" value="${esc(e.time||'')}"></div>
+    </div>
+    <div class="form-group"><label>Descripción *</label><input type="text" id="f-desc" value="${esc(e.desc||'')}"></div>
+    <div class="form-group"><label>Ubicación</label><input type="text" id="f-location" value="${esc(e.location||'')}"></div>
+    <div style="background:#f0f4ff;border-radius:6px;padding:12px;margin-top:8px">
+      <strong style="font-size:12px">🔔 Recordatorio (opcional)</strong>
+      <div class="form-group" style="margin-top:8px"><label>Fecha/hora</label><input type="datetime-local" id="f-remdt" value="${e.remdt||''}"></div>
+    </div>`;
+}
+function addEvent(){
+  openModal('Nuevo evento', eventForm(), ()=>{
+    const desc=document.getElementById('f-desc').value.trim();
+    if(!desc){ toast('La descripción es requerida'); return false; }
+    const ev={id:genId(),date:document.getElementById('f-date').value,time:document.getElementById('f-time').value,desc,location:document.getElementById('f-location').value};
+    db.agenda.push(ev);
+    const remdt=document.getElementById('f-remdt').value;
+    if(remdt){ db.reminders.push({id:genId(),title:desc,desc:'Evento: '+desc,datetime:remdt,repeat:'none',status:'pending',eventId:ev.id}); }
+    save(); renderAgenda(); toast('Evento agregado'); return true;
+  });
+}
+function editEvent(i){
+  const e=db.agenda[i];
+  const existing=db.reminders.find(r=>r.eventId===e.id);
+  openModal('Editar evento', eventForm({...e,remdt:existing?.datetime||''}), ()=>{
+    const desc=document.getElementById('f-desc').value.trim();
+    if(!desc){ toast('La descripción es requerida'); return false; }
+    db.agenda[i]={...e,date:document.getElementById('f-date').value,time:document.getElementById('f-time').value,desc,location:document.getElementById('f-location').value};
+    const remdt=document.getElementById('f-remdt').value;
+    db.reminders=db.reminders.filter(r=>r.eventId!==e.id);
+    if(remdt){ db.reminders.push({id:genId(),title:desc,desc:'Evento: '+desc,datetime:remdt,repeat:'none',status:'pending',eventId:e.id}); }
+    save(); renderAgenda(); toast('Evento actualizado'); return true;
+  });
+}
+function confirmDeleteEvent(i){ confirm2('¿Eliminar evento?','',()=>{ db.agenda.splice(i,1); save(); renderAgenda(); toast('Evento eliminado'); }); }
+
+// ===== EXPENSES =====
+const expCats=['General','Transporte','Comida','Alojamiento','Material','Servicios','Otro'];
+function renderExpenses(){
+  const total=db.expenses.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  const rows=db.expenses.map((e,i)=>`
+    <tr>
+      <td>${fmt(e.date)}</td>
+      <td><strong>$${parseFloat(e.amount||0).toLocaleString('es-MX')}</strong></td>
+      <td>${esc(e.category||'')}</td>
+      <td>${esc(e.desc)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-secondary" onclick="editExpense(${i})">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDeleteExpense(${i})">✕</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('main').innerHTML=`
+    <h2>Gastos</h2>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="addExpense()">+ Registrar gasto</button>
+      <label class="btn btn-secondary" style="cursor:pointer">↑ Importar Excel<input type="file" accept=".xlsx,.csv" style="display:none" onchange="importExcel(event,'expenses')"></label>
+      <button class="btn btn-secondary" onclick="exportCSV('expenses')">↓ CSV</button>
+      <span style="margin-left:auto;font-weight:bold;color:#1e1e2f">Total: $${total.toLocaleString('es-MX')}</span>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Monto</th><th>Categoría</th><th>Descripción</th><th>Acciones</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">Sin gastos</td></tr>'}</tbody></table></div>`;
+}
+function expenseForm(e={}){
+  return `
+    <div class="form-row">
+      <div class="form-group"><label>Monto *</label><input type="number" id="f-amount" value="${e.amount||''}" placeholder="0.00"></div>
+      <div class="form-group"><label>Fecha</label><input type="date" id="f-date" value="${e.date||today()}"></div>
+    </div>
+    <div class="form-group"><label>Categoría</label><select id="f-category">${expCats.map(c=>`<option ${e.category===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Descripción *</label><input type="text" id="f-desc" value="${esc(e.desc||'')}"></div>`;
+}
+function addExpense(){
+  openModal('Nuevo gasto', expenseForm(), ()=>{
+    const amount=document.getElementById('f-amount').value;
+    const desc=document.getElementById('f-desc').value.trim();
+    if(!amount||!desc){ toast('Monto y descripción son requeridos'); return false; }
+    db.expenses.push({id:genId(),amount,date:document.getElementById('f-date').value,category:document.getElementById('f-category').value,desc});
+    save(); renderExpenses(); toast('Gasto registrado'); return true;
+  });
+}
+function editExpense(i){
+  const e=db.expenses[i];
+  openModal('Editar gasto', expenseForm(e), ()=>{
+    const amount=document.getElementById('f-amount').value;
+    const desc=document.getElementById('f-desc').value.trim();
+    if(!amount||!desc){ toast('Monto y descripción son requeridos'); return false; }
+    db.expenses[i]={...e,amount,date:document.getElementById('f-date').value,category:document.getElementById('f-category').value,desc};
+    save(); renderExpenses(); toast('Gasto actualizado'); return true;
+  });
+}
+function confirmDeleteExpense(i){ confirm2('¿Eliminar gasto?','',()=>{ db.expenses.splice(i,1); save(); renderExpenses(); toast('Gasto eliminado'); }); }
+
+// ===== CONTACTS =====
+function renderContacts(){
+  const q=(document.getElementById('contact-search')?.value||'').toLowerCase();
+  const list=q ? db.contacts.filter(c=>c.name.toLowerCase().includes(q)||c.email?.toLowerCase().includes(q)||c.company?.toLowerCase().includes(q)) : db.contacts;
+  const rows=list.map((c,i)=>`
+    <tr>
+      <td><strong>${esc(c.name)}</strong></td>
+      <td>${esc(c.company||'')}</td>
+      <td>${esc(c.phone||'')}</td>
+      <td>${esc(c.email||'')}</td>
+      <td>${esc(c.notes||'')}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-secondary" onclick="editContact(${db.contacts.indexOf(c)})">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDeleteContact(${db.contacts.indexOf(c)})">✕</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('main').innerHTML=`
+    <h2>Contactos</h2>
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="addContact()">+ Nuevo contacto</button>
+      <label class="btn btn-secondary" style="cursor:pointer">↑ Importar Excel<input type="file" accept=".xlsx,.csv" style="display:none" onchange="importExcel(event,'contacts')"></label>
+      <button class="btn btn-secondary" onclick="exportCSV('contacts')">↓ CSV</button>
+      <input type="text" id="contact-search" placeholder="🔍 Buscar..." style="width:180px;margin-left:auto" oninput="renderContacts()">
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Empresa</th><th>Teléfono</th><th>Email</th><th>Notas</th><th>Acciones</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="6" style="text-align:center;color:#aaa;padding:20px">Sin contactos</td></tr>'}</tbody></table></div>`;
+}
+function contactForm(c={}){
+  return `
+    <div class="form-row">
+      <div class="form-group"><label>Nombre *</label><input type="text" id="f-name" value="${esc(c.name||'')}"></div>
+      <div class="form-group"><label>Empresa</label><input type="text" id="f-company" value="${esc(c.company||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Teléfono</label><input type="tel" id="f-phone" value="${esc(c.phone||'')}"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="f-email" value="${esc(c.email||'')}"></div>
+    </div>
+    <div class="form-group"><label>Notas</label><textarea id="f-notes">${esc(c.notes||'')}</textarea></div>`;
+}
+function addContact(){
+  openModal('Nuevo contacto', contactForm(), ()=>{
+    const name=document.getElementById('f-name').value.trim();
+    if(!name){ toast('El nombre es requerido'); return false; }
+    db.contacts.push({id:genId(),name,company:document.getElementById('f-company').value,phone:document.getElementById('f-phone').value,email:document.getElementById('f-email').value,notes:document.getElementById('f-notes').value});
+    save(); renderContacts(); toast('Contacto agregado'); return true;
+  });
+}
+function editContact(i){
+  const c=db.contacts[i];
+  openModal('Editar contacto', contactForm(c), ()=>{
+    const name=document.getElementById('f-name').value.trim();
+    if(!name){ toast('El nombre es requerido'); return false; }
+    db.contacts[i]={...c,name,company:document.getElementById('f-company').value,phone:document.getElementById('f-phone').value,email:document.getElementById('f-email').value,notes:document.getElementById('f-notes').value};
+    save(); renderContacts(); toast('Contacto actualizado'); return true;
+  });
+}
+function confirmDeleteContact(i){ confirm2('¿Eliminar contacto?','',()=>{ db.contacts.splice(i,1); save(); renderContacts(); toast('Contacto eliminado'); }); }
+
+// ===== TRAVELS =====
+function renderTravels(){
+  const rows=db.travels.map((t,i)=>`
+    <tr>
+      <td><strong>${esc(t.dest)}</strong></td>
+      <td>${fmt(t.dateFrom)} → ${fmt(t.dateTo)}</td>
+      <td>${esc(t.notes||'')}</td>
+      <td>${(t.checklist||[]).filter(c=>c.done).length}/${(t.checklist||[]).length}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-secondary" onclick="editTravel(${i})">✎ Ver</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDeleteTravel(${i})">✕</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('main').innerHTML=`
+    <h2>Viajes</h2>
+    <div class="toolbar"><button class="btn btn-primary" onclick="addTravel()">+ Nuevo viaje</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Destino</th><th>Fechas</th><th>Notas</th><th>Checklist</th><th>Acciones</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:20px">Sin viajes</td></tr>'}</tbody></table></div>`;
+}
+function travelFormHTML(t={}){
+  const cl=(t.checklist||[]).map((item,i)=>`
+    <div class="checklist-item">
+      <input type="checkbox" id="cl-${i}" ${item.done?'checked':''} onchange="updateCL(${i},this.checked)">
+      <span>${esc(item.text)}</span>
+      <button class="btn btn-sm" style="background:none;color:#ef4444;padding:2px 6px" onclick="removeCL(${i})">✕</button>
+    </div>`).join('');
+  return `
+    <div class="form-group"><label>Destino *</label><input type="text" id="f-dest" value="${esc(t.dest||'')}"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Fecha salida</label><input type="date" id="f-dateFrom" value="${t.dateFrom||''}"></div>
+      <div class="form-group"><label>Fecha regreso</label><input type="date" id="f-dateTo" value="${t.dateTo||''}"></div>
+    </div>
+    <div class="form-group"><label>Notas</label><textarea id="f-notes">${esc(t.notes||'')}</textarea></div>
+    <div class="form-group"><label>Checklist de viaje</label>
+      <div id="cl-list">${cl}</div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <input type="text" id="cl-new" placeholder="Nuevo ítem..." onkeydown="if(event.key==='Enter')addCL()">
+        <button class="btn btn-secondary btn-sm" onclick="addCL()">＋</button>
+      </div>
+    </div>`;
+}
+let _travelIdx=-1, _checklist=[];
+function addTravel(){
+  _travelIdx=-1; _checklist=[];
+  openModal('Nuevo viaje', travelFormHTML(), ()=>saveTravel());
+}
+function editTravel(i){
+  _travelIdx=i; _checklist=JSON.parse(JSON.stringify(db.travels[i].checklist||[]));
+  openModal('Editar viaje', travelFormHTML(db.travels[i]), ()=>saveTravel());
+}
+function addCL(){ const v=document.getElementById('cl-new').value.trim(); if(!v) return; _checklist.push({text:v,done:false}); document.getElementById('cl-new').value=''; document.getElementById('cl-list').innerHTML=travelCLHTML(); }
+function removeCL(i){ _checklist.splice(i,1); document.getElementById('cl-list').innerHTML=travelCLHTML(); }
+function updateCL(i,v){ _checklist[i].done=v; }
+function travelCLHTML(){ return _checklist.map((item,i)=>`<div class="checklist-item"><input type="checkbox" id="cl-${i}" ${item.done?'checked':''} onchange="updateCL(${i},this.checked)"><span>${esc(item.text)}</span><button class="btn btn-sm" style="background:none;color:#ef4444;padding:2px 6px" onclick="removeCL(${i})">✕</button></div>`).join(''); }
+function saveTravel(){
+  const dest=document.getElementById('f-dest').value.trim();
+  if(!dest){ toast('El destino es requerido'); return false; }
+  const obj={id:_travelIdx>=0?db.travels[_travelIdx].id:genId(),dest,dateFrom:document.getElementById('f-dateFrom').value,dateTo:document.getElementById('f-dateTo').value,notes:document.getElementById('f-notes').value,checklist:[..._checklist]};
+  if(_travelIdx>=0) db.travels[_travelIdx]=obj; else db.travels.push(obj);
+  save(); renderTravels(); toast('Viaje guardado'); return true;
+}
+function confirmDeleteTravel(i){ confirm2('¿Eliminar viaje?','',()=>{ db.travels.splice(i,1); save(); renderTravels(); toast('Viaje eliminado'); }); }
+
+// ===== NOTES =====
+const NOTE_COLORS=['#fffde7','#e8f5e9','#e3f2fd','#fce4ec','#f3e5f5','#fff3e0','#e0f7fa'];
+if(!Array.isArray(db.notes)) db.notes=[];
+
+function renderNotes(){
+  const grid=db.notes.map((n,i)=>{
+    const color=NOTE_COLORS[i%NOTE_COLORS.length];
+    const preview=n.content.replace(/\n/g,' ').slice(0,120);
+    return `
+      <div class="postit" style="background:${color}" onclick="openNoteDoc('${n.id}')">
+        <div>
+          <div class="postit-title">${esc(n.title||'Sin título')}</div>
+          <div class="postit-preview">${esc(preview)||'<em style="color:#aaa">Sin contenido</em>'}</div>
+        </div>
+        <div class="postit-footer">
+          <span class="postit-date">${fmt(n.date)}</span>
+          <button class="postit-del" title="Eliminar" onclick="event.stopPropagation();confirmDeleteNote('${n.id}')">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+  document.getElementById('main').innerHTML=`
+    <h2>Notas</h2>
+    <div class="toolbar"><button class="btn btn-primary" onclick="addNote()">+ Nueva nota</button></div>
+    ${db.notes.length ? `<div class="notes-grid">${grid}</div>` : '<div style="text-align:center;color:#aaa;padding:48px">Sin notas. Crea una nueva.</div>'}`;
+}
+
+function addNote(){
+  const n={id:genId(),title:'Nueva nota',content:'',date:today()};
+  db.notes.unshift(n); save(); openNoteDoc(n.id);
+}
+
+function openNoteDoc(id){
+  const n=db.notes.find(x=>x.id===id); if(!n) return;
+  document.getElementById('main').innerHTML=`
+    <div class="toolbar">
+      <button class="btn btn-secondary" onclick="renderNotes()">← Volver</button>
+      <button class="btn btn-primary" onclick="saveNoteDoc('${id}')">💾 Guardar</button>
+      <button class="btn btn-secondary" onclick="printNote('${id}')">↓ PDF / Imprimir</button>
+    </div>
+    <div class="note-doc">
+      <input class="note-doc-title" id="nd-title" value="${esc(n.title)}" placeholder="Título de la nota">
+      <textarea class="note-doc-body" id="nd-body">${esc(n.content)}</textarea>
+    </div>`;
+  document.getElementById('nd-body').focus();
+}
+
+function saveNoteDoc(id){
+  const n=db.notes.find(x=>x.id===id); if(!n) return;
+  n.title=document.getElementById('nd-title').value||'Sin título';
+  n.content=document.getElementById('nd-body').value;
+  n.date=today(); save(); toast('Nota guardada');
+}
+
+function confirmDeleteNote(id){
+  confirm2('¿Eliminar nota?','',()=>{
+    db.notes=db.notes.filter(n=>n.id!==id); save(); renderNotes(); toast('Nota eliminada');
+  });
+}
+
+function printNote(id){
+  saveNoteDoc(id);
+  const n=db.notes.find(x=>x.id===id); if(!n) return;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(n.title)}</title>
+    <style>body{font-family:Arial;margin:48px;font-size:13pt;line-height:1.7}h1{font-size:20pt;border-bottom:2px solid #3b3bff;padding-bottom:6px;margin-bottom:20px}pre{white-space:pre-wrap;font-family:Arial;font-size:12pt}</style>
+    </head><body><h1>${esc(n.title)}</h1><pre>${esc(n.content)}</pre></body></html>`);
+  w.document.close(); w.print();
+}
+
+// ===== TEMPLATES =====
+function renderTemplates(){
+  const rows=db.templates.map((t,i)=>`
+    <tr>
+      <td><strong>${esc(t.name)}</strong></td>
+      <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.body)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-green" onclick="copyTemplate(${i})">📋 Copiar</button>
+        <button class="btn btn-sm btn-secondary" onclick="editTemplate(${i})">✎</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDeleteTemplate(${i})">✕</button>
+      </td>
+    </tr>`).join('');
+  document.getElementById('main').innerHTML=`
+    <h2>Plantillas de Email</h2>
+    <div class="toolbar"><button class="btn btn-primary" onclick="addTemplate()">+ Nueva plantilla</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Nombre</th><th>Contenido</th><th>Acciones</th></tr></thead>
+    <tbody>${rows||'<tr><td colspan="3" style="text-align:center;color:#aaa;padding:20px">Sin plantillas</td></tr>'}</tbody></table></div>`;
+}
+function templateForm(t={}){
+  return `
+    <div class="form-group"><label>Nombre *</label><input type="text" id="f-name" value="${esc(t.name||'')}"></div>
+    <div class="form-group"><label>Contenido del email</label><textarea id="f-body" style="min-height:160px">${esc(t.body||'')}</textarea></div>`;
+}
+function addTemplate(){
+  openModal('Nueva plantilla', templateForm(), ()=>{
+    const name=document.getElementById('f-name').value.trim();
+    if(!name){ toast('El nombre es requerido'); return false; }
+    db.templates.push({id:genId(),name,body:document.getElementById('f-body').value});
+    save(); renderTemplates(); toast('Plantilla guardada'); return true;
+  });
+}
+function editTemplate(i){
+  const t=db.templates[i];
+  openModal('Editar plantilla', templateForm(t), ()=>{
+    const name=document.getElementById('f-name').value.trim();
+    if(!name){ toast('El nombre es requerido'); return false; }
+    db.templates[i]={...t,name,body:document.getElementById('f-body').value};
+    save(); renderTemplates(); toast('Plantilla actualizada'); return true;
+  });
+}
+function copyTemplate(i){ navigator.clipboard.writeText(db.templates[i].body).then(()=>toast('Copiado al portapapeles')); }
+function confirmDeleteTemplate(i){ confirm2('¿Eliminar plantilla?','',()=>{ db.templates.splice(i,1); save(); renderTemplates(); toast('Plantilla eliminada'); }); }
+
+// ===== REMINDERS =====
+function renderReminders(){
+  const now=new Date();
+  const rems=[...db.reminders].sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
+  const cards=rems.map((r,i)=>{
+    const dt=new Date(r.datetime);
+    const snoozeActive=r.snoozedUntil && new Date(r.snoozedUntil)>now;
+    return `
+      <div style="background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px #0001;display:flex;align-items:center;gap:14px;border-left:4px solid ${r.status==='urgent'?'#ef4444':r.status==='done'?'#10b981':'#3b3bff'}">
+        <span class="rem-dot ${r.status}"></span>
+        <div style="flex:1">
+          <div style="font-weight:bold">${esc(r.title)}</div>
+          <div style="font-size:12px;color:#888;margin-top:3px">${fmtDT(r.datetime)} ${r.repeat!=='none'?'· 🔁 '+(r.repeat==='daily'?'Diario':'Semanal'):''} ${snoozeActive?'· 💤 Pospuesto':''}</div>
+          ${r.desc?`<div style="font-size:12px;color:#555;margin-top:2px">${esc(r.desc)}</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px">
+          ${r.status!=='done'?`<button class="btn btn-sm btn-green" onclick="doneReminder('${r.id}')">✓</button>`:''}
+          ${r.status!=='done'&&!snoozeActive?`<button class="btn btn-sm btn-secondary" onclick="snoozeReminder('${r.id}')">💤</button>`:''}
+          <button class="btn btn-sm btn-danger" onclick="deleteReminder('${r.id}')">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+  const pending=rems.filter(r=>r.status!=='done').length;
+  document.getElementById('main').innerHTML=`
+    <h2>Recordatorios</h2>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <div class="stat"><div class="num" style="color:#ef4444">${rems.filter(r=>r.status==='urgent').length}</div><div class="lbl">Urgentes</div></div>
+      <div class="stat"><div class="num">${rems.filter(r=>r.status==='pending').length}</div><div class="lbl">Pendientes</div></div>
+      <div class="stat"><div class="num" style="color:#10b981">${rems.filter(r=>r.status==='done').length}</div><div class="lbl">Completados</div></div>
+    </div>
+    <div class="toolbar"><button class="btn btn-primary" onclick="addReminder()">+ Nuevo recordatorio</button></div>
+    ${cards||'<div style="text-align:center;color:#aaa;padding:40px">Sin recordatorios</div>'}`;
+}
+function addReminder(){
+  openModal('Nuevo recordatorio', `
+    <div class="form-group"><label>Título *</label><input type="text" id="f-title"></div>
+    <div class="form-group"><label>Descripción</label><input type="text" id="f-desc"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Fecha/hora *</label><input type="datetime-local" id="f-remdt"></div>
+      <div class="form-group"><label>Repetición</label><select id="f-repeat"><option value="none">Sin repetición</option><option value="daily">Diario</option><option value="weekly">Semanal</option></select></div>
+    </div>`, ()=>{
+    const title=document.getElementById('f-title').value.trim();
+    const remdt=document.getElementById('f-remdt').value;
+    if(!title||!remdt){ toast('Título y fecha son requeridos'); return false; }
+    db.reminders.push({id:genId(),title,desc:document.getElementById('f-desc').value,datetime:remdt,repeat:document.getElementById('f-repeat').value,status:'pending'});
+    save(); checkReminders(); renderReminders(); toast('Recordatorio creado'); return true;
+  });
+}
+function doneReminder(id){
+  const r=db.reminders.find(r=>r.id===id); if(!r) return;
+  if(r.repeat!=='none'){
+    const dt=new Date(r.datetime);
+    r.repeat==='daily'?dt.setDate(dt.getDate()+1):dt.setDate(dt.getDate()+7);
+    r.datetime=dt.toISOString().slice(0,16); r.status='pending';
+  } else r.status='done';
+  save(); renderReminders(); checkReminders(); toast('✓ Completado');
+}
+function snoozeReminder(id){
+  const r=db.reminders.find(r=>r.id===id); if(!r) return;
+  r.snoozedUntil=new Date(Date.now()+3600000).toISOString(); r.status='pending';
+  save(); renderReminders(); toast('💤 Pospuesto 1 hora');
+}
+function deleteReminder(id){ confirm2('¿Eliminar recordatorio?','',()=>{ db.reminders=db.reminders.filter(r=>r.id!==id); save(); renderReminders(); checkReminders(); toast('Eliminado'); }); }
+
+// ===== BRIEF =====
+const briefSections=[
+  {key:'priorities',title:'Prioridades del día',icon:'🎯'},
+  {key:'agenda',title:'Agenda clave',icon:'📅'},
+  {key:'pending',title:'Pendientes críticos',icon:'⏳'},
+  {key:'followups',title:'Seguimientos',icon:'📞'},
+  {key:'expenses',title:'Gastos relevantes',icon:'💰'},
+  {key:'notes',title:'Notas ejecutivas',icon:'📝'}
+];
+if(!Array.isArray(db.summaries)) db.summaries=[];
+let activeSummaryId=null;
+
+function generateBriefAuto(forDate){
+  const s={};
+  const urgent=db.reminders.filter(r=>r.status==='urgent');
+  const pendingRem=db.reminders.filter(r=>r.status==='pending');
+  const td=forDate||today();
+  const todayEvents=db.agenda.filter(e=>e.date===td);
+  s.priorities=[
+    ...db.tasks.filter(t=>t.status!=='completado'&&t.priority==='alta').map(t=>`• [ALTA] ${t.title}${t.date?' ('+fmt(t.date)+')':''}`)
+    ,...urgent.map(r=>`• [URGENTE] ${r.title}`)
+  ].join('\n')||'• Sin prioridades urgentes.';
+  s.agenda=todayEvents.length?todayEvents.map(e=>`• ${e.time} — ${e.desc}${e.location?' @ '+e.location:''}`).join('\n'):'• Sin eventos.';
+  s.pending=[
+    ...db.tasks.filter(t=>t.status!=='completado'&&t.priority!=='alta').slice(0,6).map(t=>`• ${t.title}`)
+    ,...pendingRem.slice(0,3).map(r=>`• [Recordatorio] ${r.title}`)
+  ].join('\n')||'• Sin pendientes.';
+  s.followups='• Revisar seguimientos pendientes.';
+  s.expenses=db.expenses.slice(-5).reverse().map(e=>`• $${parseFloat(e.amount).toLocaleString('es-MX')} — ${e.desc} (${fmt(e.date)})`).join('\n')||'• Sin gastos recientes.';
+  s.notes=`• Generado el ${new Date().toLocaleString('es-MX')}\n• Tareas pendientes: ${db.tasks.filter(t=>t.status!=='completado').length}\n• Recordatorios activos: ${urgent.length+pendingRem.length}`;
+  return s;
+}
+
+function renderBrief(){
+  const sorted=[...db.summaries].sort((a,b)=>b.date.localeCompare(a.date));
+  const listHTML=sorted.length ? sorted.map(s=>`
+    <div onclick="loadSummary('${s.id}')" style="padding:9px 12px;border-radius:6px;cursor:pointer;border:2px solid ${activeSummaryId===s.id?'#3b3bff':'#e5e7eb'};background:${activeSummaryId===s.id?'#eff1ff':'#fff'};margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:${activeSummaryId===s.id?'bold':'normal'};font-size:13px">${s.date}</span>
+      <span style="font-size:11px;color:#aaa">${fmt(s.date)}</span>
+    </div>`).join('') : '<div style="color:#aaa;font-size:12px;padding:8px">Sin resúmenes</div>';
+
+  const editorHTML = activeSummaryId ? buildBriefEditor() : `<div style="display:flex;align-items:center;justify-content:center;height:300px;color:#aaa;font-size:14px">Selecciona o crea un resumen</div>`;
+
+  document.getElementById('main').innerHTML=`
+    <h2>Resúmenes Ejecutivos</h2>
+    <div style="display:flex;gap:20px;align-items:flex-start">
+      <div style="width:220px;min-width:220px">
+        <button class="btn btn-primary" style="width:100%;margin-bottom:10px" onclick="promptNewSummary()">+ Nuevo resumen</button>
+        <div id="summary-list">${listHTML}</div>
+      </div>
+      <div style="flex:1" id="brief-editor">${editorHTML}</div>
+    </div>`;
+}
+
+function buildBriefEditor(){
+  const s=db.summaries.find(x=>x.id===activeSummaryId); if(!s) return '';
+  const dateStr=new Date(s.date+'T12:00:00').toLocaleDateString('es-MX',{dateStyle:'full'});
+  const sectHTML=briefSections.map(sec=>`
+    <div style="margin-bottom:18px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#3b3bff;font-weight:bold;border-bottom:1px solid #e5e7eb;padding-bottom:4px;margin-bottom:6px">${sec.icon} ${sec.title}</div>
+      <textarea class="brief-ta" id="brief-${sec.key}" oninput="autoSaveSummary()" onblur="autoSaveSummary()">${esc(s[sec.key]||'')}</textarea>
+    </div>`).join('');
+  return `
+    <div style="background:#fff;border-radius:8px;padding:22px;box-shadow:0 1px 4px #0001">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:18px;font-weight:bold;color:#1e1e2f">Brief Ejecutivo</div>
+          <div style="font-size:12px;color:#888">${dateStr}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-primary" onclick="autoSaveSummary();toast('✅ Guardado')">💾 Guardar</button>
+          <button class="btn btn-sm btn-secondary" onclick="regenActiveSummary()">🔄 Regenerar</button>
+          <button class="btn btn-sm btn-secondary" onclick="copyActiveSummary()">📋 Copiar</button>
+          <button class="btn btn-sm btn-secondary" onclick="duplicateSummary('${s.id}')">⎘ Duplicar</button>
+          <button class="btn btn-sm btn-secondary" onclick="exportSummaryPDF('${s.id}')">↓ PDF</button>
+          <button class="btn btn-sm btn-danger" onclick="confirmDeleteSummary('${s.id}')">✕ Eliminar</button>
+        </div>
+      </div>
+      ${sectHTML}
+    </div>`;
+}
+
+function autoSaveSummary(){
+  const s=db.summaries.find(x=>x.id===activeSummaryId); if(!s) return;
+  briefSections.forEach(sec=>{
+    const el=document.getElementById('brief-'+sec.key);
+    if(el) s[sec.key]=el.value;
+  });
+  save();
+  showSyncStatus('💾 Resumen guardado');
+}
+
+function loadSummary(id){
+  activeSummaryId=id;
+  renderBrief();
+}
+
+function promptNewSummary(){
+  openModal('Nuevo resumen ejecutivo',`
+    <div class="form-group"><label>Fecha del resumen</label><input type="date" id="f-sum-date" value="${today()}"></div>
+    <div class="form-group"><label>Contenido inicial</label>
+      <select class="form-input" id="f-sum-mode" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:5px;width:100%">
+        <option value="auto">Autollenar desde datos actuales</option>
+        <option value="empty">Crear vacío</option>
+      </select>
+    </div>`,[
+    {text:'Cancelar',cls:'btn-secondary',action:'close'},
+    {text:'Crear',cls:'btn-primary',action:()=>{
+      const date=document.getElementById('f-sum-date').value;
+      if(!date){ toast('Selecciona una fecha'); return false; }
+      const mode=document.getElementById('f-sum-mode').value;
+      const sections=mode==='auto'?generateBriefAuto(date):{priorities:'',agenda:'',pending:'',followups:'',expenses:'',notes:''};
+      const ns={id:genId(),date,...sections};
+      db.summaries.push(ns); save();
+      activeSummaryId=ns.id;
+      closeModal(); renderBrief(); toast('Resumen creado');
+      return true;
+    }}
+  ]);
+}
+
+function regenActiveSummary(){
+  const s=db.summaries.find(x=>x.id===activeSummaryId); if(!s) return;
+  const fresh=generateBriefAuto(s.date);
+  briefSections.forEach(sec=>{ s[sec.key]=fresh[sec.key]; });
+  save(); renderBrief(); toast('✅ Brief regenerado y guardado');
+}
+
+function duplicateSummary(id){
+  const s=db.summaries.find(x=>x.id===id); if(!s) return;
+  openModal('Duplicar resumen',`
+    <div class="form-group"><label>Nueva fecha</label><input type="date" id="f-dup-date" value="${today()}"></div>`,[
+    {text:'Cancelar',cls:'btn-secondary',action:'close'},
+    {text:'Duplicar',cls:'btn-primary',action:()=>{
+      const date=document.getElementById('f-dup-date').value;
+      if(!date){ toast('Selecciona una fecha'); return false; }
+      const ns={...JSON.parse(JSON.stringify(s)),id:genId(),date};
+      db.summaries.push(ns); save();
+      activeSummaryId=ns.id;
+      closeModal(); renderBrief(); toast('Resumen duplicado');
+      return true;
+    }}
+  ]);
+}
+
+function confirmDeleteSummary(id){
+  confirm2('¿Eliminar resumen?','Esta acción no se puede deshacer.',()=>{
+    db.summaries=db.summaries.filter(x=>x.id!==id);
+    if(activeSummaryId===id) activeSummaryId=db.summaries.length?db.summaries[0].id:null;
+    save(); renderBrief(); toast('Resumen eliminado');
+  });
+}
+
+function copyActiveSummary(){
+  const s=db.summaries.find(x=>x.id===activeSummaryId); if(!s) return;
+  const titles={priorities:'PRIORIDADES',agenda:'AGENDA',pending:'PENDIENTES',followups:'SEGUIMIENTOS',expenses:'GASTOS',notes:'NOTAS'};
+  let text=`BRIEF EJECUTIVO — ${s.date}\n${'─'.repeat(50)}\n\n`;
+  briefSections.forEach(sec=>{ text+=`${titles[sec.key]}\n${s[sec.key]||''}\n\n`; });
+  navigator.clipboard.writeText(text).then(()=>toast('Copiado al portapapeles'));
+}
+
+function exportSummaryPDF(id){
+  autoSaveSummary();
+  const s=db.summaries.find(x=>x.id===id); if(!s) return;
+  const dateStr=new Date(s.date+'T12:00:00').toLocaleDateString('es-MX',{dateStyle:'full'});
+  const titles={priorities:'Prioridades del día',agenda:'Agenda clave',pending:'Pendientes críticos',followups:'Seguimientos',expenses:'Gastos relevantes',notes:'Notas ejecutivas'};
+  let body='';
+  briefSections.forEach(sec=>{ body+=`<h2>${titles[sec.key]}</h2><pre>${esc(s[sec.key]||'')}</pre>`; });
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Brief Ejecutivo</title>
+    <style>body{font-family:Arial;margin:40px 48px;font-size:11pt;color:#111}h1{font-size:20pt;border-bottom:3px solid #3b3bff;padding-bottom:6px;margin-bottom:4px}
+    .date{font-size:9pt;color:#666;margin-bottom:28px}h2{font-size:10pt;text-transform:uppercase;letter-spacing:.08em;color:#3b3bff;margin:20px 0 6px;border-bottom:1px solid #e5e7eb;padding-bottom:3px}
+    pre{font-family:Arial;white-space:pre-wrap;font-size:10.5pt;line-height:1.7;margin:0}</style>
+    </head><body><h1>Brief Ejecutivo</h1><div class="date">${dateStr}</div>${body}</body></html>`);
+  w.document.close(); w.print();
+}
+
+// ===== IMPORT/EXPORT =====
+function exportCSV(section){
+  const maps={
+    tasks:{headers:['Título','Prioridad','Fecha','Estado','Descripción'],fields:['title','priority','date','status','desc']},
+    agenda:{headers:['Fecha','Hora','Descripción','Ubicación'],fields:['date','time','desc','location']},
+    expenses:{headers:['Fecha','Monto','Categoría','Descripción'],fields:['date','amount','category','desc']},
+    contacts:{headers:['Nombre','Empresa','Teléfono','Email','Notas'],fields:['name','company','phone','email','notes']}
+  };
+  const m=maps[section]; if(!m) return;
+  const rows=[m.headers,...db[section].map(r=>m.fields.map(f=>String(r[f]||'').replace(/,/g,' ')))];
+  const blob=new Blob([rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${section}_${today()}.csv`; a.click();
+  toast('CSV exportado');
+}
+function importExcel(e, section){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      let count=0;
+      rows.forEach(row=>{
+        const keys=Object.keys(row).map(k=>k.toLowerCase());
+        if(section==='tasks'){
+          db.tasks.push({id:genId(),title:row[Object.keys(row).find(k=>k.toLowerCase().includes('t'+'ítulo')||k.toLowerCase()==='title'||k.toLowerCase()==='titulo')||Object.keys(row)[0]]||'Sin título',priority:'media',date:'',status:'pendiente',desc:''});
+        } else if(section==='expenses'){
+          db.expenses.push({id:genId(),amount:row[Object.keys(row).find(k=>k.toLowerCase().includes('monto')||k.toLowerCase().includes('amount'))||Object.keys(row)[1]]||0,desc:row[Object.keys(row).find(k=>k.toLowerCase().includes('desc'))||Object.keys(row)[0]]||'',category:'General',date:today()});
+        } else if(section==='contacts'){
+          db.contacts.push({id:genId(),name:row[Object.keys(row).find(k=>k.toLowerCase().includes('nombre')||k.toLowerCase()==='name')||Object.keys(row)[0]]||'Sin nombre',company:row[Object.keys(row).find(k=>k.toLowerCase().includes('empresa')||k.toLowerCase().includes('company'))||'']||'',phone:row[Object.keys(row).find(k=>k.toLowerCase().includes('tel')||k.toLowerCase().includes('phone'))||'']||'',email:row[Object.keys(row).find(k=>k.toLowerCase().includes('email'))||'']||'',notes:''});
+        }
+        count++;
+      });
+      save(); nav(section); toast(`${count} registros importados`);
+    }catch(err){ toast('Error al leer el archivo: '+err.message); }
+  };
+  reader.readAsBinaryString(file);
+  e.target.value='';
+}
+
+// ===== CHANGE PASSWORD =====
+function openChangePassword(){
+  closeSidebar();
+  openModal('🔐 Cambiar contraseña',`
+    <div class="form-group"><label>Contraseña actual</label><input type="password" id="cp-current" maxlength="4" placeholder="••••"></div>
+    <div class="form-group"><label>Nueva contraseña</label><input type="password" id="cp-new" maxlength="4" placeholder="••••"></div>
+    <div class="form-group"><label>Confirmar nueva contraseña</label><input type="password" id="cp-confirm" maxlength="4" placeholder="••••"></div>
+    <div id="cp-error" style="color:#ef4444;font-size:12px;min-height:18px;margin-top:-8px"></div>`,
+  ()=>{
+    const cur=document.getElementById('cp-current').value;
+    const nw=document.getElementById('cp-new').value;
+    const cf=document.getElementById('cp-confirm').value;
+    const err=document.getElementById('cp-error');
+    if(USERS[currentUser]!==cur){err.textContent='Contraseña actual incorrecta';return false;}
+    if(nw.length<4){err.textContent='La nueva contraseña debe tener 4 dígitos';return false;}
+    if(nw!==cf){err.textContent='Las contraseñas no coinciden';return false;}
+    USERS[currentUser]=nw;
+    toast('✅ Contraseña actualizada');return true;
+  });
+}
+
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+  const _saved=sessionStorage.getItem('execUser');
+  if(_saved && USERS[_saved]){
+    currentUser=_saved;
+    document.getElementById('user-chip-name').textContent=_saved;
+    document.getElementById('sidebar-username').textContent=_saved;
+    const _rb=document.getElementById('btn-reset-demo');
+    if(_rb) _rb.style.display=_saved==='admin'?'':'none';
+    initSession();
+  }
+</script>
+</body>
+</html>

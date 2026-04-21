@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Susazón · Centro de Herramientas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --border: rgba(255,255,255,0.07);
+    --accent: #e8612a;
+    --accent2: #f0a35a;
+    --text: #f0ede8;
+    --muted: #7a7d88;
+    --card-bg: #181b25;
+    --sidebar: #10121a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOP NAV ── */
+  .topnav {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 54px;
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px;
+    color: #fff; letter-spacing: -1px; flex-shrink: 0; margin-right: 10px;
+  }
+  .brand {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 16px; letter-spacing: -.5px; margin-right: 28px;
+  }
+  .brand span { color: var(--accent); }
+
+  .nav-tabs {
+    display: flex; align-items: stretch; height: 100%; gap: 2px; flex: 1;
+  }
+  .nav-tab {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 16px; cursor: pointer;
+    font-size: 13px; font-weight: 400; color: var(--muted);
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s, background .2s;
+    white-space: nowrap; user-select: none;
+  }
+  .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .nav-tab .tab-icon { font-size: 15px; }
+  .nav-tab .tab-badge {
+    font-size: 9px; font-weight: 600;
+    background: rgba(34,197,94,0.15); color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.25);
+    border-radius: 10px; padding: 1px 6px; margin-left: 2px;
+  }
+
+  /* ── CONTENT AREA ── */
+  .content {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── HOME SCREEN ── */
+  .home-screen {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 48px 24px 60px;
+    background: var(--bg);
+  }
+  .home-screen::before {
+    content:''; position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232,97,42,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 90% 80%, rgba(240,163,90,0.06) 0%, transparent 50%);
+    pointer-events:none; z-index:0;
+  }
+  .home-inner { position: relative; z-index: 1; width: 100%; max-width: 820px; }
+  .home-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 4vw, 52px); font-weight: 800;
+    line-height: 1.05; letter-spacing: -2px; margin-bottom: 8px;
+  }
+  .home-title em { font-style: normal; -webkit-text-stroke: 1px var(--accent); color: transparent; }
+  .home-sub { font-size: 14px; color: var(--muted); font-weight: 300; margin-bottom: 40px; }
+  .home-divider {
+    width: 100%; height: 1px; background: var(--border); margin-bottom: 32px; position: relative;
+  }
+  .home-divider::before {
+    content:''; position:absolute; left:0; top:0; width:60px; height:1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+  .cards-grid {
+    display: grid; grid-template-columns: repeat(2,1fr); gap: 14px;
+  }
+  @media(max-width:580px){ .cards-grid{ grid-template-columns:1fr; } }
+  .card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px 24px;
+    cursor: pointer; display: flex; flex-direction: column;
+    transition: border-color .25s, transform .25s, box-shadow .25s;
+    position: relative; overflow: hidden;
+    opacity: 0; transform: translateY(20px);
+    animation: fadeUp .45s ease forwards;
+  }
+  .card:nth-child(1){animation-delay:.08s}
+  .card:nth-child(2){animation-delay:.16s}
+  .card:nth-child(3){animation-delay:.24s}
+  .card:nth-child(4){animation-delay:.32s}
+  @keyframes fadeUp{ to{opacity:1;transform:translateY(0)} }
+  .card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity:0; transition:opacity .25s;
+  }
+  .card:hover { border-color:rgba(232,97,42,.4); transform:translateY(-2px); box-shadow:0 12px 32px rgba(0,0,0,.4); }
+  .card:hover::before { opacity:1; }
+  .card-icon {
+    width:44px; height:44px; border-radius:10px;
+    background:rgba(232,97,42,.1); border:1px solid rgba(232,97,42,.2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; margin-bottom:16px;
+    transition:background .25s, transform .2s;
+  }
+  .card:hover .card-icon{ background:rgba(232,97,42,.18); transform:scale(1.06); }
+  .card-num { font-size:10px; font-weight:700; letter-spacing:2px; color:var(--accent); text-transform:uppercase; margin-bottom:5px; }
+  .card-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:800; letter-spacing:-.5px; margin-bottom:8px; }
+  .card-desc { font-size:12px; color:var(--muted); line-height:1.6; flex:1; }
+  .card-badge {
+    display:inline-flex; align-items:center; gap:4px; margin-top:10px;
+    padding:2px 7px; border-radius:20px; font-size:10px; font-weight:500;
+    background:rgba(34,197,94,.1); color:#4ade80;
+    border:1px solid rgba(34,197,94,.2); width:fit-content;
+  }
+  .card-badge::before{ content:''; width:4px; height:4px; border-radius:50%; background:#4ade80; }
+  .card-cta {
+    margin-top:20px; display:flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:500; color:var(--accent);
+    letter-spacing:.5px; text-transform:uppercase; transition:gap .2s;
+  }
+  .card:hover .card-cta{ gap:9px; }
+  .cta-line{ width:20px; height:1px; background:var(--accent); position:relative; transition:width .2s; }
+  .card:hover .cta-line{ width:28px; }
+  .cta-line::after{
+    content:''; position:absolute; right:0; top:-3px;
+    width:5px; height:5px;
+    border-right:1.5px solid var(--accent); border-top:1.5px solid var(--accent);
+    transform:rotate(45deg);
+  }
+
+  /* ── IFRAME PANELS ── */
+  .tool-panel {
+    position: absolute; inset: 0;
+    display: none;
+  }
+  .tool-panel.active { display: block; }
+  .tool-panel iframe {
+    width: 100%; height: 100%; border: none;
+    background: #fff;
+  }
+
+  /* ── ERROR PANEL ── */
+  .error-panel {
+    position: absolute; inset: 0;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--bg); text-align: center; padding: 40px;
+  }
+  .error-panel.visible { display: flex; }
+  .error-icon { font-size: 48px; margin-bottom: 20px; }
+  .error-title { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; margin-bottom:10px; }
+  .error-msg { font-size:14px; color:var(--muted); max-width:480px; line-height:1.7; margin-bottom:28px; }
+  .error-steps {
+    background:var(--card-bg); border:1px solid var(--border);
+    border-radius:12px; padding:20px 24px; text-align:left;
+    max-width:500px; width:100%;
+  }
+  .error-steps p { font-size:12px; font-weight:600; letter-spacing:1px; color:var(--accent); text-transform:uppercase; margin-bottom:12px; }
+  .error-steps ol { padding-left:20px; }
+  .error-steps li { font-size:13px; color:var(--muted); line-height:1.8; }
+  .error-steps code {
+    background:rgba(255,255,255,0.06); border-radius:4px;
+    padding:1px 5px; font-size:12px; color:var(--text);
+  }
+  .btn-back {
+    margin-top:24px; padding:10px 22px;
+    background:rgba(232,97,42,.15); color:var(--accent);
+    border:1px solid rgba(232,97,42,.3); border-radius:8px;
+    cursor:pointer; font-size:13px; font-weight:500;
+    transition:background .2s;
+  }
+  .btn-back:hover{ background:rgba(232,97,42,.25); }
+
+  /* footer */
+  .status-bar {
+    height: 26px; background: var(--sidebar);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 16px;
+    gap: 12px; flex-shrink: 0;
+  }
+  .status-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); opacity:.7; animation:pulse 2.5s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.3)} }
+  .status-text { font-size:11px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="logo-mark">Sz</div>
+  <div class="brand">Susa<span>zón</span></div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tool="home" onclick="showTool('home')">
+      <span class="tab-icon">⊞</span> Inicio
+    </div>
+    <div class="nav-tab" data-tool="compras" onclick="showTool('compras')">
+      <span class="tab-icon">🛒</span> Compras Suve
+    </div>
+    <div class="nav-tab" data-tool="precios" onclick="showTool('precios')">
+      <span class="tab-icon">📊</span> Histórico Precios
+    </div>
+    <div class="nav-tab" data-tool="matriz" onclick="showTool('matriz')">
+      <span class="tab-icon">🗺️</span> Matriz Cliente–Producto
+      <span class="tab-badge">Auto-guardado</span>
+    </div>
+    <div class="nav-tab" data-tool="crm" onclick="showTool('crm')">
+      <span class="tab-icon">🍽️</span> SusaRest CRM
+    </div>
+  </div>
+</nav>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- HOME -->
+  <div class="home-screen" id="panel-home">
+    <div class="home-inner">
+      <div class="home-title">Centro de<br><em>Herramientas</em></div>
+      <p class="home-sub">Selecciona una herramienta para comenzar</p>
+      <div class="home-divider"></div>
+      <div class="cards-grid">
+
+        <div class="card" onclick="showTool('compras')">
+          <div class="card-icon">🛒</div>
+          <div class="card-num">01 — Compras</div>
+          <div class="card-title">Compras Suve P&M</div>
+          <div class="card-desc">Gestión y seguimiento de órdenes de compra para el equipo de abastecimiento.</div>
+          <div class="card-cta">Abrir <div class="cta-line"></div></div>
+        </div>
+
+        <div class="card" onclick="showTool('precios')">
+          <div class="card-icon">📊</div>
+          <div class="card-num">02 — Precios</div>
+          <div class="card-title">Histórico de Precios</div>
+          <div class="card-desc">Seguimiento histórico por SKU con importación de PDF y Excel, gráficas y alertas de variación.</div>
+          <div class="card-cta">Abrir <div class="cta-line"></div></div>
+        </div>
+
+        <div class="card" onclick="showTool('matriz')">
+          <div class="card-icon">🗺️</div>
+          <div class="card-num">03 — Inteligencia</div>
+          <div class="card-title">Matriz Cliente–Producto</div>
+          <div class="card-desc">Análisis de penetración y oportunidades de venta cruzada por cliente y categoría.</div>
+          <div class="card-badge">Guarda datos automáticamente</div>
+          <div class="card-cta">Abrir <div class="cta-line"></div></div>
+        </div>
+
+        <div class="card" onclick="showTool('crm')">
+          <div class="card-icon">🍽️</div>
+          <div class="card-num">04 — CRM</div>
+          <div class="card-title">SusaRest CRM</div>
+          <div class="card-desc">Sistema integral para gestión de clientes restauranteros: inventario, recetas, food cost y pedidos.</div>
+          <div class="card-cta">Abrir <div class="cta-line"></div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOL PANELS (iframes) -->
+  <div class="tool-panel" id="panel-compras">
+    <iframe id="iframe-compras" src="" title="Compras Suve P&M"></iframe>
+  </div>
+  <div class="tool-panel" id="panel-precios">
+    <iframe id="iframe-precios" src="" title="Histórico de Precios"></iframe>
+  </div>
+  <div class="tool-panel" id="panel-matriz">
+    <iframe id="iframe-matriz" src="" title="Matriz Cliente–Producto"></iframe>
+  </div>
+  <div class="tool-panel" id="panel-crm">
+    <iframe id="iframe-crm" src="" title="SusaRest CRM"></iframe>
+  </div>
+
+  <!-- ERROR PANEL -->
+  <div class="error-panel" id="panel-error">
+    <div class="error-icon">📁</div>
+    <div class="error-title">Archivo no encontrado</div>
+    <div class="error-msg" id="error-msg">
+      No se encontró el archivo de la herramienta. Asegúrate de que todos los archivos estén en la misma carpeta.
+    </div>
+    <div class="error-steps">
+      <p>¿Cómo solucionar esto?</p>
+      <ol>
+        <li>Coloca <strong>todos</strong> los archivos .html en la misma carpeta</li>
+        <li>Abre <code>susazon_hub.html</code> desde esa carpeta</li>
+        <li>Los archivos necesarios son:<br>
+          <code>Compras_Suve_PM_4.html</code><br>
+          <code>HTTA HISTORICO PRECIOS SUSAZON.html</code><br>
+          <code>matriz_cliente_producto.html</code><br>
+          <code>susarest_crm_prototipo_17.html</code>
+        </li>
+      </ol>
+    </div>
+    <button class="btn-back" onclick="showTool('home')">← Volver al inicio</button>
+  </div>
+
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-dot"></div>
+  <span class="status-text" id="status-text">Susazón Gourmet · Uso interno · Celaya, Gto.</span>
+</div>
+
+<script>
+const TOOLS = {
+  compras: { file: 'Compras_Suve_PM_4.html',               label: 'Compras Suve P&M' },
+  precios: { file: 'HTTA HISTORICO PRECIOS SUSAZON.html',  label: 'Histórico de Precios' },
+  matriz:  { file: 'matriz_cliente_producto.html',          label: 'Matriz Cliente–Producto' },
+  crm:     { file: 'susarest_crm_prototipo_17.html',        label: 'SusaRest CRM' },
+};
+
+let currentTool = 'home';
+const loaded = {};
+
+function showTool(id) {
+  // hide all panels
+  document.querySelectorAll('.home-screen, .tool-panel, .error-panel').forEach(el => {
+    el.classList.remove('active');
+    el.style.display = '';
+  });
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+  // activate nav tab
+  const tab = document.querySelector(`[data-tool="${id}"]`);
+  if (tab) tab.classList.add('active');
+
+  if (id === 'home') {
+    document.getElementById('panel-home').style.display = 'flex';
+    document.getElementById('status-text').textContent = 'Susazón Gourmet · Uso interno · Celaya, Gto.';
+    currentTool = 'home';
+    return;
+  }
+
+  const tool = TOOLS[id];
+  if (!tool) return;
+
+  const panel = document.getElementById(`panel-${id}`);
+  const iframe = document.getElementById(`iframe-${id}`);
+
+  // lazy-load iframe
+  if (!loaded[id]) {
+    iframe.src = tool.file;
+    loaded[id] = true;
+
+    iframe.onerror = () => showError(tool);
+
+    // Timeout fallback: if after 4s the iframe still has about:blank or shows error
+    setTimeout(() => {
+      try {
+        const iDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iDoc || iDoc.title === '' && iDoc.body && iDoc.body.innerHTML.trim() === '') {
+          showError(tool);
+        }
+      } catch(e) {
+        // cross-origin or loaded fine — do nothing
+      }
+    }, 4000);
+  }
+
+  panel.classList.add('active');
+  panel.style.display = 'block';
+  document.getElementById('status-text').textContent = `Herramienta activa: ${tool.label}`;
+  currentTool = id;
+}
+
+function showError(tool) {
+  document.querySelectorAll('.home-screen, .tool-panel').forEach(el => {
+    el.classList.remove('active');
+    el.style.display = '';
+  });
+  const errPanel = document.getElementById('panel-error');
+  errPanel.classList.add('visible');
+  document.getElementById('error-msg').textContent =
+    `No se encontró el archivo "${tool.file}". Asegúrate de que esté en la misma carpeta que susazon_hub.html.`;
+  document.getElementById('status-text').textContent = '⚠ Archivo no encontrado';
+}
+
+// Init
+document.getElementById('panel-home').style.display = 'flex';
+</script>
+</body>
+</html>
